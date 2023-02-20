@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import vn.aloapp.training.springboot.dao.CategoryDao;
 import vn.aloapp.training.springboot.entity.Category;
+import vn.aloapp.training.springboot.entity.CategoryModel;
 
 @Service("categoryService")
 @Transactional
@@ -17,29 +18,40 @@ public class CategoryServiceImpl implements CategoryService{
 	CategoryDao categoryDao;
 
 	@Override
-	public Category spUCreateCategory(int userId, String name, String prefixName, String normalizeName,
-			String description, int sort) throws Exception {
-		return categoryDao.spUCreateCategory(userId, name, prefixName, normalizeName, description, sort);
+	public Category spUCreateCategory(Category category) throws Exception {
+		return categoryDao.spUCreateCategory(category);
 	}
 
 	@Override
-	public Category findOneByIdCategory(Integer id) throws Exception {
-		return categoryDao.findOneByIdCategory(id);
+	public Category findOne(Integer id) throws Exception {
+		return categoryDao.findOne(id);
 	}
 
 	@Override
-	public void spUUpdateCategory(Category category) throws Exception {
-		categoryDao.spUUpdateCategory(category);
+	public void spUChangeStatusCategory(Integer id) throws Exception {
+		categoryDao.spUChangeStatusCategory(id);
+		
 	}
 
 	@Override
-	public List<Category> spGListCategorie(Integer userId, String keyword, Integer status) throws Exception {
-		return categoryDao.spGListCategories(userId, keyword, status);
+	public Category spUUpdateCategory(Category category) throws Exception {
+		return categoryDao.spUUpdateCategory(category);
 	}
 
 	@Override
-	public void deleteByIdCategory(Category category) throws Exception {
-		categoryDao.deleteByIdCategory(category);
+	public List<Category> spGCategories(int userId, String keyword, int status) throws Exception {
+		return categoryDao.spGCategories(userId, keyword, status);
 	}
+
+	@Override
+	public List<CategoryModel> spGCategoriesV2(int id) throws Exception {
+		return categoryDao.spGCategoriesV2(id);
+	}
+
+	@Override
+	public void update(Category category) {
+		categoryDao.update(category);	
+	}
+
 
 }

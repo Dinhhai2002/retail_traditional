@@ -22,8 +22,6 @@ import vn.aloapp.training.springboot.entity.Category;
 @NoArgsConstructor
 public class CategoryResponse {
 	
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 	
 	@JsonProperty("user_id")
@@ -42,6 +40,9 @@ public class CategoryResponse {
     private String description;
 
     private int sort;
+    
+    @JsonProperty("list")
+	private ObjectList list;
 
     private int status;
     
@@ -57,6 +58,7 @@ public class CategoryResponse {
 		this.normalizeName = entity.getNormalizeName();
 		this.description = entity.getDescription();
 		this.sort = entity.getSort();
+		this.list = new ObjectList<>();
 		this.status = entity.getStatus();
 		this.createAt = entity.getCreatedAt();
 		

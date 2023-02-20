@@ -6,10 +6,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.Valid;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import vn.aloapp.training.springboot.request.CRUDMaterialRequest;
 
 
 @Data
@@ -53,16 +55,16 @@ public class Material extends BaseEntity{
 	private int unitId;
 
 	@Column(name = "wastage_rate")
-	private String wastageRate;
+	private float wastageRate;
 
 	@Column(name = "out_stock_alert_quantity")
-	private String outStockAlertQuantity;
+	private float outStockAlertQuantity;
 
 	@Column(name = "retail_price")
-	private String retailPrice;
+	private double retailPrice;
 
 	@Column(name = "cost_price")
-	private String costPrice;
+	private double costPrice;
 
 	private int status;
 

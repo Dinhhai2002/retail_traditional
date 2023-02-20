@@ -3,19 +3,22 @@ package vn.aloapp.training.springboot.dao;
 import java.util.List;
 
 import vn.aloapp.training.springboot.entity.Category;
+import vn.aloapp.training.springboot.entity.CategoryModel;
 
 public interface CategoryDao {
 
-	Category spUCreateCategory(int userId, String name, String prefixName, String normalizeName, String description,
-			int sort) throws Exception;
+	Category spUCreateCategory(Category category) throws Exception;
 
-	Category findOneByIdCategory(Integer id) throws Exception;
+	Category findOne(Integer id) throws Exception;
 
-	void spUUpdateCategory(Category category) throws Exception;
+	void spUChangeStatusCategory(Integer id) throws Exception;
 
-	List<Category> spGListCategories(Integer userId, String keyword, Integer status) throws Exception;
+	Category spUUpdateCategory(Category category) throws Exception;
+	public List<Category> spGCategories(int userId,String keyword,int status) throws Exception;
 
-	void deleteByIdCategory(Category category) throws Exception;
+	List<CategoryModel> spGCategoriesV2(int id) throws Exception;
+	
+	void update(Category category);
 
 
 
