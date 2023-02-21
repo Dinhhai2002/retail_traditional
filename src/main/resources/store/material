@@ -1,0 +1,413 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_list_material`(
+	IN  `_status` TINYINT(1),
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255)
+)
+BEGIN
+	
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+	SET `status_code`=0;
+	SET `message_error`='Success';
+
+	SELECT 	m.*
+	FROM 	materials  AS m
+	WHERE m.status  = `_status`;
+			
+	
+END
+
+
+
+-----------------------
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_material_by_category`(
+ 	 IN `categoryId` TEXT,
+	 OUT `status_code` TINYINT(1),
+	 OUT `message_error` VARCHAR(255)
+)
+SP:BEGIN
+	
+	 DECLARE `index` TINYINT(3) DEFAULT 0;
+	 DECLARE `itemCount` TINYINT(3) DEFAULT 0;
+	 
+	 DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	 END;
+
+	 SET `status_code` = 0;
+	 SET `message_error` = 'Success';
+	
+	 DROP TEMPORARY TABLE IF EXISTS tbl_category_ids;
+	 CREATE TEMPORARY TABLE IF NOT EXISTS tbl_category_ids (
+	    id INT(11)
+	  );
+	
+	 SET `index` = 0;
+	 SET `itemCount` = JSON_LENGTH(`categoryId`);
+	
+	 WHILE `index` < `itemCount` DO
+	        INSERT INTO tbl_category_ids (id)
+			SELECT  JSON_EXTRACT(`categoryId`, CONCAT('$[', `index`, ']'));
+		    SET `index` = `index` + 1;  		 
+	 END WHILE;
+	
+	SELECT 	m.* 
+	FROM 	materials  m
+	WHERE 	m.category_id  IN (
+							SELECT 	* 
+							FROM 	tbl_category_ids
+						); 
+	
+	 DROP TEMPORARY TABLE IF EXISTS tbl_category_ids;	 
+	
+END
+
+
+
+
+--------------------
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_unit_by_material`(
+     IN `unitId` INT(11),
+	 OUT `status_code` TINYINT(1),
+	 OUT `message_error` VARCHAR(255)
+)
+SP:BEGIN
+	
+	 DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	 END;
+
+	 SET `status_code` = 0;
+	 SET `message_error` = 'Success';
+	
+
+	SELECT 	u.* ,CONCAT('[',GROUP_CONCAT(JSON_OBJECT(
+												'id', m.id,
+												'name', m.name													
+								)
+					),']') AS listMaterials
+	FROM 	units u LEFT JOIN materials m ON u.id = m.unit_id 
+	WHERE 	m.unit_id = u.id 
+	GROUP BY u.id ;
+	
+
+END
+
+
+
+---------------------
+
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_change_status_material`(
+	IN `_id` INT(11),
+	IN `_status` TINYINT(1),
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+SP:BEGIN
+	
+	DECLARE `isExitMaterial` TINYINT DEFAULT 0;
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`=0;
+	SET `message_error`='Success';
+
+	SELECT 1
+	INTO `isExitMaterial`
+	FROM materials m
+	WHERE m.id= `_id`;
+
+
+	IF `isExitMaterial` != 1 THEN
+	SET `status_code` = 2;
+	SET `message_error` = CONCAT('Vật liệu có mã: ',`_id`,' không tìm thấy!');
+	LEAVE SP; 
+	END IF;
+
+
+	UPDATE materials m 
+	SET m.status = `_status`
+	WHERE m.id = `_id`; 
+
+END
+
+
+
+
+----------
+
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_create_material`(
+
+	IN `_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `userId` INT(11),
+	IN `_avatar` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `avatarThumb` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `categoryId` INT(11),
+	IN `unitId` INT(11),
+	IN `wastageRate` DECIMAL(3,0),
+	IN `outStockAlertQuantity` DECIMAL(5,2),
+	IN `retailPrice` DECIMAL(20,0),
+	IN `costPrice` DECIMAL(20,0),
+
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+SP:BEGIN
+	
+
+	DECLARE `isExitMaterial` TINYINT DEFAULT 0;
+	DECLARE `isExitUnit` TINYINT DEFAULT 0;
+	DECLARE `isExitCategory` TINYINT DEFAULT 0;
+	DECLARE `prefixNameIn` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `normalizeNameIn` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `codeIn` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `preId` INT(11);
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`=0;
+	SET `message_error`='Success';
+
+-- kiểm tra tên đã tồn tại chưa
+	SELECT 	1
+	INTO 	`isExitMaterial`
+	FROM 	materials 
+	WHERE 	name= `_name`;
+
+	IF `isExitMaterial` > 0 THEN
+	SET `status_code` = 2;
+	SET `message_error` = CONCAT('Tên vật liệu: ',`_name`,' đã tồn tại!');
+	LEAVE SP; 
+	END IF;
+
+-- kiểm tra unitId;
+
+	SELECT 	1
+	INTO 	`isExitUnit`
+	FROM 	units u
+	WHERE 	u.id = `unitId`;
+
+	IF `isExitUnit` > 0 THEN
+	SET `status_code` = 2;
+	SET `message_error` = CONCAT('Mã đơn vị: ',`unitId`,' không tìm thấy!');
+	LEAVE SP; 
+	END IF;
+
+-- kiểm tra categoryId
+
+	SELECT 	1
+	INTO 	`isExitCategory`
+	FROM 	categories c
+	WHERE 	c.id = `categoryId`;
+
+	IF 	`isExitUnit` > 0 THEN
+	SET `status_code` = 2;
+	SET `message_error` = CONCAT('Mã danh mục: ',`categoryId`,' không tìm thấy!');
+	LEAVE SP; 
+	END IF;
+
+	
+	SET `prefixNameIn` = prefix_name(`_name`);
+	SET `normalizeNameIn` = normalize_name(`_name`);
+	SET `codeIn` = prefix_name(`_name`);
+
+	SELECT 	IFNULL(MAX(m.id),0)
+	INTO   `preId`
+	FROM 	materials m;
+
+	SET `codeIn` = CONCAT(`prefixNameIn`, `preId` + 1);
+
+
+	INSERT INTO materials ( 
+							code,
+							name,
+							prefix_name,
+							normalize_name,
+							user_id,
+							avatar,
+							avatar_thumb,
+							category_id,
+							unit_id,
+							wastage_rate,
+							out_stock_alert_quantity,
+							retail_price,
+							cost_price
+						  ) 
+				SELECT  `codeIn`,
+						`_name`,
+						`prefixNameIn`,
+						`normalizeNameIn`,
+						`userId`,
+						`_avatar`,
+						`avatarThumb`,
+						`categoryId`,
+						`unitId`,
+						`wastageRate`,
+						`outStockAlertQuantity`,
+						`retailPrice`,
+						`costPrice`;
+
+
+	SELECT m.* 
+	FROM materials AS m 
+	WHERE m.id = LAST_INSERT_ID(); 
+END
+
+
+---------------
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_delete_category_id_by_material`(
+	IN `categoryId` INT(11),
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+SP:BEGIN
+	
+	DECLARE `total` INT DEFAULT 0;
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`=0;
+	SET `message_error`='Success';
+
+	UPDATE materials m
+	SET m.category_id  = 0
+	WHERE m.category_id  = `categoryId`;
+
+END
+
+
+------------
+
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_update_material`(
+
+	IN `_id` INT(11),
+	IN `_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `userId` INT(11),
+	IN `_avatar` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `avatarThumb` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `categoryId` INT(11),
+	IN `unitId` INT(11),
+	IN `wastageRate` DECIMAL(3,0),
+	IN `outStockAlertQuantity` DECIMAL(5,2),
+	IN `retailPrice` DECIMAL(20,0),
+	IN `costPrice` DECIMAL(20,0),
+
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+SP:BEGIN
+	
+	DECLARE `isExitMaterial` TINYINT DEFAULT 0;
+	DECLARE `prefixNameIn` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `normalizeNameIn` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `codeIn` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`=0;
+	SET `message_error`='Success';
+
+	SELECT COUNT(*)
+	INTO `isExitMaterial`
+	FROM materials m
+	WHERE m.name= `_name`;
+
+
+	IF `isExitMaterial` > 0 THEN
+	SET `status_code` = 2;
+	SET `message_error` = CONCAT('Tên vật liệu: ',`_name`,' đã tồn tại!');
+	LEAVE SP; 
+	END IF;
+	
+
+	SET `prefixNameIn` = prefix_name(`_name`);
+	SET `normalizeNameIn` = normalize_name(`_name`);
+	SET `codeIn` = prefix_name(`_name`);
+
+	SET `codeIn` = CONCAT(`prefixNameIn`,`_id`);
+
+
+	UPDATE materials m SET
+		m.code = `codeIn`,
+		m.name = 	`_name`, 
+		m.prefix_name = `prefixNameIn`, 
+		m.normalize_name = `normalizeNameIn`, 
+		m.user_id = `userId`, 
+		m.avatar = `_avatar`, 
+		m.avatar_thumb = `avatarThumb`, 
+		m.category_id = `categoryId`, 
+		m.unit_id = `unitId`, 
+		m.wastage_rate = `wastageRate`, 
+		m.out_stock_alert_quantity = `outStockAlertQuantity`, 
+		m.retail_price = `retailPrice`, 
+		m.cost_price = `costPrice`
+	WHERE m.id = `_id`; 
+
+	SELECT * 
+	FROM materials AS m 
+	WHERE m.id = `_id`; 
+END
+
+
+
+---------------------
+
+
+
+
+CREATE PROCEDURE retail_traditional.sp_u_delete_unit_id_by_material(
+	IN `unitId` INT(11),
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+SP:BEGIN
+	
+	DECLARE `total` INT DEFAULT 0;
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`=0;
+	SET `message_error`='Success';
+
+	UPDATE materials m
+	SET m.unit_id = 0
+	WHERE m.unit_id  = `unitId`;
+
+END
