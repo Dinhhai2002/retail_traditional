@@ -1,5 +1,7 @@
 package vn.aloapp.training.springboot;
 
+import java.text.ParseException;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,7 +13,9 @@ import org.springframework.context.annotation.ComponentScan;
 @EnableAutoConfiguration
 public class TechresTrainingApplication extends SpringBootServletInitializer {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParseException {
         SpringApplication.run(TechresTrainingApplication.class, args);
+        
     }
+    
 }
