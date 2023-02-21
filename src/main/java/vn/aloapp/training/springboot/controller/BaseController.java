@@ -3,6 +3,9 @@
  */
 package vn.aloapp.training.springboot.controller;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,5 +53,16 @@ public class BaseController {
 		response.setData(null);
 
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+	}
+	
+	public String formatDate(String inputDate) throws ParseException
+	{
+        SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        Date inputDate1 = inputDateFormat.parse(inputDate);
+
+        SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String outputDateStr = outputDateFormat.format(inputDate1);
+
+        return outputDateStr;
 	}
 }
