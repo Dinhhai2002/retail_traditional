@@ -2,17 +2,22 @@ package vn.aloapp.training.springboot.controller;
 
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import vn.aloapp.training.springboot.entity.WarehouseSession;
 import vn.aloapp.training.springboot.entity.WarehouseSessionDetail;
+import vn.aloapp.training.springboot.request.CRUDWarehouseSessionRequest;
 import vn.aloapp.training.springboot.response.BaseResponse;
 import vn.aloapp.training.springboot.response.WarehouseSessionDetailResponse;
 import vn.aloapp.training.springboot.response.WarehouseSessionResponse;
@@ -52,5 +57,49 @@ public class WarehouseSessionController {
 
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 	}
+	
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@PostMapping(value = "/create/import", produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResponseEntity<BaseResponse> createWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper) throws Exception {
+		BaseResponse response = new BaseResponse();
+		WarehouseSession warehouseSession=warehouseSessionService.importWarehouseSession(wrapper);
+		
+		response.setData(new WarehouseSessionResponse(warehouseSession));
+		
+		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+	}
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@PostMapping(value = "/create/export", produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResponseEntity<BaseResponse> ExportWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper) throws Exception {
+		BaseResponse response = new BaseResponse();
+		WarehouseSession warehouseSession=warehouseSessionService.exportWarehouseSession(wrapper);
+		
+		response.setData(new WarehouseSessionResponse(warehouseSession));
+		
+		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+	}
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@PostMapping(value = "/create/cancel", produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResponseEntity<BaseResponse> cancelWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper) throws Exception {
+		BaseResponse response = new BaseResponse();
+		WarehouseSession warehouseSession=warehouseSessionService.cancelWarehouseSession(wrapper);
+		
+		response.setData(new WarehouseSessionResponse(warehouseSession));
+		
+		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@PostMapping(value = "/create/return", produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResponseEntity<BaseResponse> returnWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper) throws Exception {
+		BaseResponse response = new BaseResponse();
+		WarehouseSession warehouseSession=warehouseSessionService.returnWarehouseSession(wrapper);
+		
+		response.setData(new WarehouseSessionResponse(warehouseSession));
+		
+		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+	}
+	
 
 }

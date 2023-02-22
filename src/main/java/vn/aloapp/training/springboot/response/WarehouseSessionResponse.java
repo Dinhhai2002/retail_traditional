@@ -1,5 +1,6 @@
 package vn.aloapp.training.springboot.response;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -88,7 +89,7 @@ public class WarehouseSessionResponse {
 		this.isIncludeVat = entity.getIsIncludeVat();
 		this.description = entity.getDescription();
 		this.createAt = entity.getCreatedAt();
-		this.list = new ObjectList();
+		this.list =  new ObjectList() ;
 	}
 	
 	public List<WarehouseSessionResponse> mapToList(List<WarehouseSession> entities) {

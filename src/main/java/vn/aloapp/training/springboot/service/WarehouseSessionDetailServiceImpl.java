@@ -10,7 +10,7 @@ import vn.aloapp.training.springboot.dao.WarehouseSessionDetailDao;
 import vn.aloapp.training.springboot.entity.WarehouseSessionDetail;
 
 @Service("warehouseSessionDetailService")
-@Transactional
+@Transactional(rollbackFor = Error.class)
 public class WarehouseSessionDetailServiceImpl implements WarehouseSessionDetailService{
 	
 	@Autowired
