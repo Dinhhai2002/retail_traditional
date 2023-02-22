@@ -1,0 +1,37 @@
+CREATE PROCEDURE retail_traditional.sp_g_warehouse_session_detail_by_warehouse_session_id(
+	IN `warehouseSessionId` BIGINT,
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+SP:BEGIN
+	
+	DECLARE `isExitwarehouseSessionId` TINYINT DEFAULT 0;
+	DECLARE `isUse` TINYINT(1) DEFAULT 0;
+	DECLARE `statusCurrent` TINYINT(1) DEFAULT 0;
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`= 0;
+	SET `message_error`= 'Success';
+
+	SELECT 	COUNT(*)
+	INTO 	`isExitwarehouseSessionId`
+	FROM 	warehouse_sessions ws
+	WHERE 	ws.id = `warehouseSessionId`;
+
+
+	IF `isExitwarehouseSessionId` != 1 THEN
+	SET `status_code` = 2;
+	SET `message_error` = CONCAT('Danh mục có mã: ',`warehouseSessionId`,' không tìm thấy!');
+	LEAVE SP; 
+	END IF;
+
+	SELECT *
+	FROM  warehouse_session_details wsd
+	WHERE wsd.warehouse_session_id  = `warehouseSessionId`;
+
+END
