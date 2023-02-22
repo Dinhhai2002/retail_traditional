@@ -33,6 +33,8 @@ public class CategoryController {
 	@Autowired
 	MaterialService materialService;
 
+	// create Category
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/create", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDCategoryRequest request) throws Exception {
@@ -49,7 +51,7 @@ public class CategoryController {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	// update Unit
+	// update Category
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/{id}/update", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -73,9 +75,9 @@ public class CategoryController {
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 	}
 
-	// get list Unit and filter
 
-	// get Unit detail
+	// get Category detail
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@GetMapping(value = "/{id}/detail", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getById(@PathVariable("id") Integer id) throws Exception {
@@ -93,7 +95,7 @@ public class CategoryController {
 
 	}
 
-	// delete Unit
+	// change status Category
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/{id}/change-status", produces = { MediaType.APPLICATION_JSON_VALUE })
@@ -130,6 +132,9 @@ public class CategoryController {
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 
 	}
+	
+	
+	// get list Category
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@GetMapping(value = "/get-list", produces = { MediaType.APPLICATION_JSON_VALUE })
