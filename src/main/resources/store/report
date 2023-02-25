@@ -1,0 +1,522 @@
+CREATE PROCEDURE retail_traditional.sp_g_amount_statistical(
+	IN `_input` INT(11) ,
+	IN `fromDateString` VARCHAR(255),
+	IN `toDateString` VARCHAR(255),
+	IN `_type` INT(11),
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255)
+
+)
+BEGIN  
+	
+	DECLARE `fromDate` timestamp;
+	DECLARE `toDate` timestamp;
+	DECLARE `year` INT(11);
+	DECLARE `yearWeek` Date;
+	DECLARE `month` INT(3);
+	DECLARE `index` INT(4) DEFAULT 0;
+	DECLARE	`indexDAY` INT(11) DEFAULT 0;
+	
+ 	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	 END;
+
+	 SET `status_code` = 0;
+	 SET `message_error` = 'Success';
+	
+-- 	tạo bảng tạm chứa 24 giờ của 1 ngày
+	DROP TEMPORARY TABLE IF EXISTS tbl_hour;
+	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_hour
+			(
+			id INT(4),
+			time_hour VARCHAR(255)
+			
+			);
+		
+	WHILE `index` < 24 DO
+		
+		INSERT INTO tbl_hour (
+					id,
+					time_hour			
+					)
+			SELECT 
+					`index`,
+					ADDTIME("00:00:00",concat('0',`index`,':00:00') );
+	
+		SET `index`=`index` + 1;
+	END WHILE;
+
+	
+--  tạo bảng chứa các ngày trong năm và thuộc tuần bao nhiêu
+	SET `index` = 1;
+	DROP TEMPORARY TABLE IF EXISTS tbl_date_week;
+	CREATE TEMPORARY TABLE tbl_date_week(
+				day_in_week DATE,
+ 				week_of_year INT(11)
+		);
+		
+ 		SET `yearWeek` = CONCAT(DATE_FORMAT(NOW(),'%Y'),'-','1-1'); 
+ 		SET `indexDAY` = DAYOFYEAR(DATE_FORMAT(NOW(), '%Y-12-31'));
+ 
+ 		WHILE `index` <=  (`indexDAY` - 1)  DO 
+ 		
+ 			INSERT INTO tbl_date_week(
+ 								day_in_week,
+ 								week_of_year
+ 									)
+  			SELECT	DATE_ADD(`yearWeek` , INTERVAL `index` DAY) AS day_in_week,
+  					weekofyear(DATE_ADD(`yearWeek` , INTERVAL `index` DAY)) AS week_of_year;
+  			
+  			
+  			SET `index` = `index` +1;
+  		
+ 			END WHILE;
+ 		
+--   tạo bảng ngày chứa tất cả các ngày của 1 tháng 
+  	DROP TEMPORARY TABLE IF EXISTS tbl_date;
+	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_date
+			(
+			id INT(4),
+			time_date VARCHAR(255)
+			
+			);
+		
+	SET `index` = 1;
+	SET `year`=  YEAR(DATE_FORMAT(fromDateString,'%y-%m-%d'));
+	SET `month`= CONVERT( DATE_FORMAT(LAST_DAY(fromDateString),'%m') , UNSIGNED);
+	WHILE `index` <= CONVERT( DATE_FORMAT(LAST_DAY(fromDateString),'%d') , UNSIGNED) DO
+		
+		INSERT INTO tbl_date (
+					id,
+					time_date			
+					)
+			SELECT 
+					`index`,
+					DATE_FORMAT( concat(`year`,'-0',`month`,'-',`index`),'%Y-%m-%d');
+
+	
+		SET `index`=`index` + 1;
+	END WHILE;
+
+-- 	tạo bảng tháng chứa tất cả các tháng của 1 năm
+	DROP TEMPORARY TABLE IF EXISTS tbl_month;
+	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_month
+			(
+			id INT(4),
+			time_month VARCHAR(255)
+			
+			);
+		
+	SET `index` = 1;
+	
+	WHILE `index` <= 12 DO
+		
+		INSERT INTO tbl_month (
+					id,
+					time_month			
+					)
+			SELECT 
+					`index`,
+					DATE_FORMAT( concat(`year`,'-0',`index`,'-00'),'%Y-%m');
+
+	
+		SET `index`=`index` + 1;
+	END WHILE;
+	
+-- type = 1 : báo cáo doanh thu theo từng giờ trong ngày của 1 ngày bất kì
+	IF `_type`= 1
+		THEN
+			SET `fromDate` = CASE 
+								WHEN `fromDateString` IS NOT NULL 
+									THEN DATE_FORMAT(`fromDateString`,'%Y-%m-%d 00:00:00') 
+									ELSE NULL END;
+  			SET `toDate` = CASE 
+	  							WHEN `fromDateString`IS NOT NULL 
+	  								THEN DATE_FORMAT(`fromDateString`,'%Y-%m-%d 23:59:59') 
+	  								ELSE NULL END;
+	  							
+			DROP TEMPORARY TABLE IF EXISTS tbl_test;
+			CREATE TEMPORARY TABLE IF NOT EXISTS tbl_test (
+-- 					
+			SELECT DATE_FORMAT(ws.created_at,'%H:00:00') as `date` ,	
+					
+					SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountImport`,
+				  		SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountExport`,				  		 	
+				  			(SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  			-
+				  			SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  						) AS `profit`,
+				  	(
+				  	SUM(CASE WHEN wsd.warehouse_session_type = 0  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+		 				SUM(CASE WHEN wsd.warehouse_session_type = 1 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+						SUM(CASE WHEN wsd.warehouse_session_type = 2 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+					+
+						SUM(CASE WHEN wsd.warehouse_session_type = 3  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+		  			)*(100-m.wastage_rate )/100 AS `inventory`
+					
+			
+			FROM 	warehouse_sessions AS ws 
+					INNER JOIN warehouse_session_details wsd ON ws.id = wsd.warehouse_session_id 
+ 					INNER JOIN materials m ON m.id = wsd.material_id 
+			WHERE 	DATE_FORMAT(ws.created_at,'%Y-%m-%d %H:00:00') >= `fromDate`
+		 	AND 	DATE_FORMAT(ws.created_at,'%Y-%m-%d %H:00:00') <= `toDate`
+		 	GROUP BY `date`
+					);
+				
+				
+			SELECT 	th.time_hour AS `date` ,
+					IFNULL(tt.amountImport,0) AS  `amountImport`,
+					IFNULL(tt.amountExport,0) `amountExport`,
+					IFNULL(tt.profit,0) AS `profit`,
+					IFNULL(tt.inventory,0) AS `inventory`
+			FROM 	tbl_hour th LEFT JOIN tbl_test tt ON tt.`date` = th.time_hour
+			ORDER BY th.time_hour;
+		
+-- type =  2 báo cáo doanh thu ngày nhập vào
+	ELSEIF(`_type` = 2)
+		THEN 
+			SET `fromDate` = CASE 
+								WHEN `fromDateString` IS NOT NULL 
+									THEN DATE_FORMAT(`fromDateString`,'%Y-%m-%d ') 
+									ELSE NULL END;
+  			SET `toDate` = CASE 
+	  							WHEN `toDateString`IS NOT NULL 
+	  								THEN DATE_FORMAT(`toDateString`,'%Y-%m-%d') 
+	  								ELSE NULL END;
+	  							
+	  		DROP TEMPORARY TABLE IF EXISTS tbl_test;
+			CREATE TEMPORARY TABLE IF NOT EXISTS tbl_test (					
+	  		SELECT `fromDate` as `date` ,
+					
+						SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountImport`,
+				  		SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountExport`,				  		 	
+				  			(SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  			-
+				  			SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  						) AS `profit`,
+				  		
+				  	(
+				  	SUM(CASE WHEN wsd.warehouse_session_type = 0  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+		 				SUM(CASE WHEN wsd.warehouse_session_type = 1 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+						SUM(CASE WHEN wsd.warehouse_session_type = 2 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+					+
+						SUM(CASE WHEN wsd.warehouse_session_type = 3  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+		  			)*(100-m.wastage_rate )/100 AS `inventory`				
+				  		
+				  			FROM 	warehouse_sessions AS ws 
+				  					INNER JOIN warehouse_session_details wsd ON ws.id = wsd.warehouse_session_id 
+ 									INNER JOIN materials m ON m.id = wsd.material_id 
+							WHERE 	DATE_FORMAT(ws.created_at,'%Y-%m-%d') = `fromDate`
+							GROUP BY `date`
+								);
+				SELECT * FROM tbl_test;
+		
+-- type = 3 báo cáo doanh thu các ngày trong tuần theo số tuần truyền vào
+		ELSEIF(`_type` = 3)
+			THEN 
+			IF  `_input`> 52 OR `_input`< 1 THEN
+				SET `status_code` = 2;
+	 			SET `message_error` = 'số tuần truyền vào phải nhỏ hơn 52 và lớn hơn 0';
+			END IF;
+					
+			SELECT  MIN(t.day_in_week) AS Fday,
+  					MAX(t.day_in_week) AS Lday
+  			INTO 	`fromDate`,`toDate`
+		  	FROM  	tbl_date_week AS t
+		  	WHERE 	t.week_of_year = `_input`;
+		  
+		  
+		  	DROP TEMPORARY TABLE IF EXISTS tbl_test;
+			CREATE TEMPORARY TABLE IF NOT EXISTS tbl_test (					
+	  		SELECT DATE_FORMAT(ws.created_at,'%Y-%m-%d') as `date` ,
+					
+					SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountImport`,
+				  		SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountExport`,				  		 	
+				  			(SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  			-
+				  			SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  						) AS `profit`,
+				  	(
+				  	SUM(CASE WHEN wsd.warehouse_session_type = 0  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+		 				SUM(CASE WHEN wsd.warehouse_session_type = 1 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+						SUM(CASE WHEN wsd.warehouse_session_type = 2 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+					+
+						SUM(CASE WHEN wsd.warehouse_session_type = 3  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+		  			)*(100-m.wastage_rate )/100 AS `inventory`						
+				  		
+				  			FROM 	warehouse_sessions AS ws 
+				  					INNER JOIN warehouse_session_details wsd ON ws.id = wsd.warehouse_session_id 
+ 									INNER JOIN materials m ON m.id = wsd.material_id
+							WHERE 	DATE_FORMAT(ws.created_at,'%Y-%m-%d %H:00:00') >= `fromDate`
+		 							AND DATE_FORMAT(ws.created_at,'%Y-%m-%d %H:00:00') <= `toDate`
+							GROUP BY `date`
+								);
+				
+				SELECT 	tw.day_in_week AS `date`,
+						IFNULL(tt.amountImport,0) AS  `amountImport`,
+						IFNULL(tt.amountExport,0) `amountExport`,
+						IFNULL(tt.profit,0) AS `profit`,
+						IFNULL(tt.inventory,0) AS `inventory`
+				FROM 		tbl_date_week tw 
+				LEFT JOIN 	tbl_test tt ON tt.`date` = tw.day_in_week
+				WHERE 		tw.week_of_year = `_input`
+				ORDER BY 	tw.day_in_week;
+
+-- 			type = 4 báo cáo doanh thu các ngày trong tháng 
+		ELSEIF(`_type` = 4)
+			THEN 
+
+								
+	  		SET `fromDate` = STR_TO_DATE(CONCAT(YEAR(`fromDateString`), '-', MONTH(`fromDateString`), '-01'), '%Y-%m-%d')  ;
+    		SET `toDate` = LAST_DAY(`toDateString`) ;
+    		
+    		 IF MONTH(`fromDate`) <> MONTH(`toDate`)
+    		THEN
+    			SET `status_code` = 2;
+	 			SET `message_error` = 'tháng truyền vào phải trùng nhau';
+    		
+    		END IF;
+    		
+	  		DROP TEMPORARY TABLE IF EXISTS tbl_test;
+			CREATE TEMPORARY TABLE IF NOT EXISTS tbl_test (					
+	  		SELECT DATE_FORMAT(ws.created_at,'%Y-%m-%d') AS `date` , 
+					
+					SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountImport`,
+				  		SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountExport`,				  		 	
+				  			(SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  			-
+				  			SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  						) AS `profit`,
+				  		(
+				  	SUM(CASE WHEN wsd.warehouse_session_type = 0  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+		 				SUM(CASE WHEN wsd.warehouse_session_type = 1 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+						SUM(CASE WHEN wsd.warehouse_session_type = 2 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+					+
+						SUM(CASE WHEN wsd.warehouse_session_type = 3  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+		  			)*(100-m.wastage_rate )/100 AS `inventory`				
+				  		
+				  			FROM 	warehouse_sessions AS ws 
+				  					INNER JOIN warehouse_session_details wsd ON ws.id = wsd.warehouse_session_id 
+ 									INNER JOIN materials m ON m.id = wsd.material_id
+							WHERE 	DATE_FORMAT(ws.created_at,'%Y-%m-%d ') >= `fromDate`
+		 							AND DATE_FORMAT(ws.created_at,'%Y-%m-%d ') <= `toDate`
+							GROUP BY DATE_FORMAT(ws.created_at,'%Y-%m-%d')
+								);
+				
+				SELECT 	td.time_date AS `date`,
+						IFNULL(tt.amountImport,0) AS  `amountImport`,
+						IFNULL(tt.amountExport,0) `amountExport`,
+						IFNULL(tt.profit,0) AS `profit`,
+						IFNULL(tt.inventory,0) AS `inventory`
+			FROM 		tbl_date td 
+			LEFT JOIN 	tbl_test tt ON tt.`date` = td.time_date
+			ORDER BY 	td.time_date;
+		
+-- type = 5 báo cáo doanh thu các tháng trong 1 năm 
+		ELSEIF(`_type` = 5)
+			THEN 
+
+			SET fromDate = STR_TO_DATE(CONCAT(YEAR(`fromDateString`), '-01-01'), '%Y-%m-%d')  ;
+    		SET toDate = STR_TO_DATE(CONCAT(YEAR(`fromDateString`), '-12-31'), '%Y-%m-%d')  ;
+    	
+    		
+    		if(`year` <> YEAR(DATE_FORMAT(`toDateString`,'%y-%m-%d')))
+    		THEN
+    			 	SET `status_code` = 2;
+	 				SET `message_error` = 'năm truyền vào phải trùng nhau';
+    		END IF;
+    	
+    		
+    		
+	  		DROP TEMPORARY TABLE IF EXISTS tbl_test;
+			CREATE TEMPORARY TABLE IF NOT EXISTS tbl_test (					
+	  		SELECT DATE_FORMAT(ws.created_at,'%Y-%m') AS `date` , 
+					
+					SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountImport`,
+				  		SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+			  				
+				  		 AS `amountExport`,				  		 	
+				  			(SUM(CASE WHEN ws.type = 1  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  			-
+				  			SUM(CASE WHEN ws.type = 0  
+						 					THEN ws.total_amount 
+					    					ELSE 0
+				  						END)
+				  						) AS `profit`,
+				  	(
+				  	SUM(CASE WHEN wsd.warehouse_session_type = 0  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+		 				SUM(CASE WHEN wsd.warehouse_session_type = 1 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+	  				-
+						SUM(CASE WHEN wsd.warehouse_session_type = 2 
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+					+
+						SUM(CASE WHEN wsd.warehouse_session_type = 3  
+				 					THEN quantity 
+			    					ELSE 0
+		  						END)
+		  			)*(100-m.wastage_rate )/100 AS `inventory`						
+				  		
+				  			FROM 	warehouse_sessions AS ws 
+				  					INNER JOIN warehouse_session_details wsd ON ws.id = wsd.warehouse_session_id 
+ 									INNER JOIN materials m ON m.id = wsd.material_id
+							WHERE 	DATE_FORMAT(ws.created_at,'%Y-%m-%d ') >= `fromDate`
+		 							AND DATE_FORMAT(ws.created_at,'%Y-%m-%d ') <= `toDate`
+							GROUP BY DATE_FORMAT(ws.created_at,'%Y-%m')
+								);
+				
+				SELECT 		tm.time_month AS `date`,
+							IFNULL(tt.amountImport,0) AS  `amountImport`,
+							IFNULL(tt.amountExport,0) `amountExport`,
+							IFNULL(tt.profit,0) AS `profit`,
+							IFNULL(tt.inventory,0) AS `inventory`
+				FROM 		tbl_month tm 
+				LEFT JOIN 	tbl_test tt ON tt.`date` = tm.time_month
+				ORDER BY 	tm.time_month;
+					
+							 	
+			
+	END IF;
+
+
+END
