@@ -1,0 +1,210 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_users`(
+	IN 	`keySearch`	VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255)
+)
+BEGIN
+	
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+	SET `status_code`=0;
+	SET `message_error`='Success';
+
+	SELECT 	u.*
+	FROM 	users  AS u
+	WHERE 	( 
+				(`keySearch` <> '' 	AND u.first_name LIKE CONCAT('%', `keySearch` , '%')
+									OR u.last_name  LIKE CONCAT('%',`keySearch`,'%')
+									OR u.full_name  LIKE CONCAT('%',`keySearch`,'%')
+									OR u.phone  LIKE CONCAT('%',`keySearch`,'%')
+									OR u.email  LIKE CONCAT('%',`keySearch`,'%')
+				) 
+				OR `keySearch` = '' 				
+			) ;
+			
+			
+			
+	
+END
+
+----------------------------
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_create_user`(
+	IN 	`firstName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN 	`lastName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN 	`fullName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN 	`_gender` TINYINT(1),
+-- 	IN  `_birthday` TIMESTAMP,
+	IN 	`_email` VARCHAR(255),
+	IN 	`isExpire` TINYINT(1),
+	IN 	`_avatar` VARCHAR(255),
+	IN 	`wardId` INT(11),
+	IN 	`cityId` INT(11),
+	IN 	`districtId` INT(11),
+	IN 	`fbUid` VARCHAR(255),
+	IN 	`ggUid` VARCHAR(255),
+	IN 	`appleUid` VARCHAR(255),
+	IN 	`_phone` VARCHAR(20),
+ 	IN 	`_password` VARCHAR(255),
+	IN 	`authType` INT(11),
+	IN 	`verifyCode` VARCHAR(255),
+	IN 	`verifyFailCount` INT(11),
+	IN 	`isVerified` INT(11),
+-- 	IN 	`lastActivityAt` TIMESTAMP,
+-- 	IN 	`lastLoginAt` TIMESTAMP,
+	IN 	`accessToken` VARCHAR(255),
+	IN 	`refeshToken` VARCHAR(255),
+-- 	IN  `isVerifyCodeAt` TIMESTAMP,
+	IN 	`isLogin` TINYINT(1),
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255))
+SP:BEGIN
+	DECLARE `isExitUser` TINYINT(1)  DEFAULT 0;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+
+	SET `status_code`=0;
+	SET `message_error`='success';
+
+	SELECT 	1
+	INTO 	`isExitUser`
+	FROM 	users 
+	WHERE 	full_name=`fullName`
+			OR phone=`_phone`;
+	
+	IF `isExitUser` > 0 THEN
+		SET `status_code` = 2;
+		SET `message_error` = 'Thông tin nhập bị trùng khớp';
+		LEAVE SP;	
+	END IF;
+	
+
+	INSERT INTO users(
+						first_name,
+						last_name,
+						full_name,
+						gender,
+						email,
+						is_expire,
+						avatar,
+						ward_id,
+						city_id,
+						district_id,
+						fb_uid,
+						gg_uid,
+						apple_uid,
+						phone,
+						password,
+						auth_type,
+						verify_code,
+						verify_fail_count,
+						is_verified,
+						access_token,
+						refesh_token,
+						is_login )
+						
+				SELECT `firstName`,
+						`lastName`,
+						`fullName`,
+						`_gender`,
+						`_email`,
+						`isExpire`,
+						`_avatar`,
+						`wardId`,
+						`cityId`,
+						`districtId`,
+						`fbUid`,
+						`ggUid`,
+						`appleUid`,		
+						`_phone`,
+						`_password`,
+						`authType`,
+						`verifyCode`,
+						`verifyFailCount`,
+						`isVerified`,
+						`accessToken`,
+						`refeshToken`,
+						`isLogin`;
+
+
+	SELECT 	u.* 
+	FROM 	users u 
+	WHERE  	u.id = last_insert_id() ; 
+END
+
+--------------
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_delete_user`(
+	IN 	`_id` INT(11),
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255))
+BEGIN
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`=0;
+	SET `message_error`='success';
+
+	UPDATE 	users  AS u
+	SET 	u.is_expire  = 0
+	WHERE 	u.id=`_id`;
+
+	SELECT 	* 
+	FROM 	users  AS u
+	WHERE  	u.id =`_id` ; 
+END
+
+------------------
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_update_user`(
+	IN 	`_id` INT(11),
+	IN 	`firstName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN 	`lastName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN 	`fullName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN 	`_gender` TINYINT(1),
+	IN 	`_email` VARCHAR(255),
+	IN 	`wardId` INT(11),
+	IN 	`cityId` INT(11),
+	IN 	`districtId` INT(11),
+	IN 	`fbUid` VARCHAR(255),
+	IN 	`ggUid` VARCHAR(255),
+	IN 	`appleUid` VARCHAR(255),
+	IN 	`_phone` VARCHAR(20),
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255))
+BEGIN
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`=0;
+	SET `message_error`='success';
+
+	UPDATE 	users  AS u
+	SET 	u.first_name  =`firstName`,
+			u.last_name  =`lastName`,
+			u.full_name  = `fullName`,
+			u .gender =`_gender`,
+			u.email =`_email`,
+			u.ward_id =`wardId`,
+			u.city_id=`cityId`,
+			u.district_id=`district_id`,
+			u.fb_uid=`fbUid`,
+			u.gg_uid=`ggUid`,
+			u.apple_uid=`appleUid`,
+			u.phone=`_phone`
+			
+	WHERE 	u.id=`_id`;
+
+	SELECT 	* 
+	FROM 	users  AS u
+	WHERE  	u.id =`_id` ; 
+END

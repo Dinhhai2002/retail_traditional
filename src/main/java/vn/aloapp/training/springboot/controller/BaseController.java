@@ -3,6 +3,9 @@
  */
 package vn.aloapp.training.springboot.controller;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,5 +53,19 @@ public class BaseController {
 		response.setData(null);
 
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+	}
+	
+	public String formatDate(String date)
+	{
+	    DateFormat inputFormat = new SimpleDateFormat("dd-MM-yyyy");
+	    DateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");
+	    try {
+	      Date date1 = inputFormat.parse(date);
+	      String outputDateStr = outputFormat.format(date1);
+	      return outputDateStr;
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	    }
+		return null;
 	}
 }
