@@ -1,5 +1,7 @@
 package vn.aloapp.training.springboot.dao;
 
+import java.util.List;
+
 import javax.persistence.ParameterMode;
 import javax.persistence.StoredProcedureQuery;
 
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import vn.aloapp.training.common.enums.StoreProcedureStatusCodeEnum;
 import vn.aloapp.training.common.exception.TechresHttpException;
 import vn.aloapp.training.springboot.entity.WarehouseSession;
+import vn.aloapp.training.springboot.entity.Report;
 import vn.aloapp.training.springboot.request.CRUDWarehouseSessionRequest;
 
 @Repository("warehouseSessionDao")
@@ -32,7 +35,6 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("userId", Integer.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("discountPercent", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("_vat", Double.class, ParameterMode.IN)
-				.registerStoredProcedureParameter("vatAmount", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("discountAmount", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("_description", String.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("warehouseSessionDetail", String.class, ParameterMode.IN)
@@ -43,10 +45,9 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 		query.setParameter("userId", wrapper.getUserId());
 		query.setParameter("discountPercent", wrapper.getDiscountPercent());
 		query.setParameter("_vat", wrapper.getVat());
-		query.setParameter("vatAmount", wrapper.getVatAmount());
 		query.setParameter("discountAmount", wrapper.getDiscountAmount());
 		query.setParameter("_description", wrapper.getDescription());
-		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetail()));
+		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
@@ -70,7 +71,6 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("userId", Integer.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("discountPercent", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("_vat", Double.class, ParameterMode.IN)
-				.registerStoredProcedureParameter("vatAmount", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("discountAmount", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("_description", String.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("warehouseSessionDetail", String.class, ParameterMode.IN)
@@ -81,10 +81,9 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 		query.setParameter("userId", wrapper.getUserId());
 		query.setParameter("discountPercent", wrapper.getDiscountPercent());
 		query.setParameter("_vat", wrapper.getVat());
-		query.setParameter("vatAmount", wrapper.getVatAmount());
 		query.setParameter("discountAmount", wrapper.getDiscountAmount());
 		query.setParameter("_description", wrapper.getDescription());
-		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetail()));
+		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
@@ -108,7 +107,6 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("userId", Integer.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("discountPercent", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("_vat", Double.class, ParameterMode.IN)
-				.registerStoredProcedureParameter("vatAmount", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("discountAmount", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("_description", String.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("warehouseSessionDetail", String.class, ParameterMode.IN)
@@ -119,10 +117,9 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 		query.setParameter("userId", wrapper.getUserId());
 		query.setParameter("discountPercent", wrapper.getDiscountPercent());
 		query.setParameter("_vat", wrapper.getVat());
-		query.setParameter("vatAmount", wrapper.getVatAmount());
 		query.setParameter("discountAmount", wrapper.getDiscountAmount());
 		query.setParameter("_description", wrapper.getDescription());
-		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetail()));
+		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
@@ -146,7 +143,6 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("userId", Integer.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("discountPercent", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("_vat", Double.class, ParameterMode.IN)
-				.registerStoredProcedureParameter("vatAmount", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("discountAmount", Double.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("_description", String.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("warehouseSessionDetail", String.class, ParameterMode.IN)
@@ -157,10 +153,9 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 		query.setParameter("userId", wrapper.getUserId());
 		query.setParameter("discountPercent", wrapper.getDiscountPercent());
 		query.setParameter("_vat", wrapper.getVat());
-		query.setParameter("vatAmount", wrapper.getVatAmount());
 		query.setParameter("discountAmount", wrapper.getDiscountAmount());
 		query.setParameter("_description", wrapper.getDescription());
-		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetail()));
+		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
@@ -174,5 +169,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 			throw new Exception(messageError);
 		}
 	}
+
+	
 
 }

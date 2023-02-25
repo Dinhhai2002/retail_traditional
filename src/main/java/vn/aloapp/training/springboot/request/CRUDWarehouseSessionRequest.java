@@ -57,5 +57,6 @@ public class CRUDWarehouseSessionRequest {
 	@JsonProperty("create_at")
 	private Date createAt;
 	
-	private Object warehouseSessionDetail;
+	@JsonProperty("warehouse_session_details")
+	private Object warehouseSessionDetails;
 }
