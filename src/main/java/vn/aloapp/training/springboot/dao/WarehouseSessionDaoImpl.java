@@ -1,7 +1,5 @@
 package vn.aloapp.training.springboot.dao;
 
-import java.util.List;
-
 import javax.persistence.ParameterMode;
 import javax.persistence.StoredProcedureQuery;
 
@@ -14,7 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import vn.aloapp.training.common.enums.StoreProcedureStatusCodeEnum;
 import vn.aloapp.training.common.exception.TechresHttpException;
 import vn.aloapp.training.springboot.entity.WarehouseSession;
-import vn.aloapp.training.springboot.entity.Report;
 import vn.aloapp.training.springboot.request.CRUDWarehouseSessionRequest;
 
 @Repository("warehouseSessionDao")
@@ -28,7 +25,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WarehouseSession importWarehouseSession(CRUDWarehouseSessionRequest wrapper) throws Exception {
+	public WarehouseSession importWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_create_warehouse_session", WarehouseSession.class)
 
@@ -47,7 +44,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 		query.setParameter("_vat", wrapper.getVat());
 		query.setParameter("discountAmount", wrapper.getDiscountAmount());
 		query.setParameter("_description", wrapper.getDescription());
-		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
+		query.setParameter("warehouseSessionDetail", warehouseSessionDetails);
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
@@ -64,7 +61,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WarehouseSession exportWarehouseSession(CRUDWarehouseSessionRequest wrapper) throws Exception {
+	public WarehouseSession exportWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_export_warehouse_session", WarehouseSession.class)
 
@@ -83,8 +80,8 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 		query.setParameter("_vat", wrapper.getVat());
 		query.setParameter("discountAmount", wrapper.getDiscountAmount());
 		query.setParameter("_description", wrapper.getDescription());
-		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
-
+		query.setParameter("warehouseSessionDetail", warehouseSessionDetails);
+		
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
 
@@ -100,7 +97,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WarehouseSession cancelWarehouseSession(CRUDWarehouseSessionRequest wrapper) throws Exception {
+	public WarehouseSession cancelWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_cancel_warehouse_session", WarehouseSession.class)
 
@@ -119,7 +116,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 		query.setParameter("_vat", wrapper.getVat());
 		query.setParameter("discountAmount", wrapper.getDiscountAmount());
 		query.setParameter("_description", wrapper.getDescription());
-		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
+		query.setParameter("warehouseSessionDetail", warehouseSessionDetails);
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
@@ -136,7 +133,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WarehouseSession returnWarehouseSession(CRUDWarehouseSessionRequest wrapper) throws Exception {
+	public WarehouseSession returnWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_return_warehouse_session", WarehouseSession.class)
 
@@ -155,7 +152,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 		query.setParameter("_vat", wrapper.getVat());
 		query.setParameter("discountAmount", wrapper.getDiscountAmount());
 		query.setParameter("_description", wrapper.getDescription());
-		query.setParameter("warehouseSessionDetail",new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
+		query.setParameter("warehouseSessionDetail", warehouseSessionDetails);
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
@@ -168,6 +165,33 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 		default:
 			throw new Exception(messageError);
 		}
+	}
+
+	@Override
+	public void spUExportWarehouseSessionFromOrder(long id) throws Exception {
+		StoredProcedureQuery query = this.getSession()
+				.createStoredProcedureQuery("sp_u_export_warehouse_session_from_order", WarehouseSession.class)
+
+				.registerStoredProcedureParameter("orderId", Long.class, ParameterMode.IN)
+				
+				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
+				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
+
+		query.setParameter("orderId", id);
+		
+		
+		int statusCode = (int) query.getOutputParameterValue("status_code");
+		String messageError = query.getOutputParameterValue("message_error").toString();
+
+		switch (StoreProcedureStatusCodeEnum.valueOf(statusCode)) {
+		case SUCCESS:
+			break;
+		case INPUT_INVALID:
+			throw new TechresHttpException(HttpStatus.BAD_REQUEST, messageError);
+		default:
+			throw new Exception(messageError);
+		}
+		
 	}
 
 	

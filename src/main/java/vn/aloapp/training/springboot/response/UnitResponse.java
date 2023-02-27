@@ -13,10 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import vn.aloapp.training.springboot.entity.Unit;
 
-@Data
-@Setter
-@Getter
-@NoArgsConstructor
+
 public class UnitResponse {
 	
 	private int id;
@@ -33,6 +30,10 @@ public class UnitResponse {
 	@JsonProperty("create_at")
 	private Date createAt;
 	
+	public UnitResponse () {
+		
+	}
+	
 	public UnitResponse(Unit entity) {
 		this.id = entity.getId();
 		this.name = entity.getName();
@@ -46,4 +47,53 @@ public class UnitResponse {
 		return entities.stream().map(x -> new UnitResponse(x)).collect(Collectors.toList());
 	}
 
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getUserId() {
+		return userId;
+	}
+
+	public void setUserId(int userId) {
+		this.userId = userId;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public Date getCreateAt() {
+		return createAt;
+	}
+
+	public void setCreateAt(Date createAt) {
+		this.createAt = createAt;
+	}
+
+	
 }

@@ -9,8 +9,7 @@ import javax.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
+
 @Entity
 public class Report {
 	
@@ -24,6 +23,39 @@ public class Report {
 	private BigDecimal amountExport;
 	private BigDecimal profit;
 	private BigDecimal inventory;
+	
+	
+	public String getDate() {
+		return date;
+	}
+	public void setDate(String date) {
+		this.date = date;
+	}
+	public BigDecimal getAmountImport() {
+		return amountImport;
+	}
+	public void setAmountImport(BigDecimal amountImport) {
+		this.amountImport = amountImport;
+	}
+	public BigDecimal getAmountExport() {
+		return amountExport;
+	}
+	public void setAmountExport(BigDecimal amountExport) {
+		this.amountExport = amountExport;
+	}
+	public BigDecimal getProfit() {
+		return profit;
+	}
+	public void setProfit(BigDecimal profit) {
+		this.profit = profit;
+	}
+	public BigDecimal getInventory() {
+		return inventory;
+	}
+	public void setInventory(BigDecimal inventory) {
+		this.inventory = inventory;
+	}
+	
 	
 	
 }

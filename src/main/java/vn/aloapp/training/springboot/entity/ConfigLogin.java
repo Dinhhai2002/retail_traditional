@@ -11,9 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+
 @Entity
 @Table(name="categories")
 public class ConfigLogin extends BaseEntity{
@@ -58,5 +56,97 @@ public class ConfigLogin extends BaseEntity{
 
 	@Column(name = "api_upload")
 	private String apiUpload;
+
+
+	public int getId() {
+		return id;
+	}
+
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+
+	public String getSecretKey() {
+		return secretKey;
+	}
+
+
+	public void setSecretKey(String secretKey) {
+		this.secretKey = secretKey;
+	}
+
+
+	public String getApiKey() {
+		return apiKey;
+	}
+
+
+	public void setApiKey(String apiKey) {
+		this.apiKey = apiKey;
+	}
+
+
+	public String getOauthDomain() {
+		return oauthDomain;
+	}
+
+
+	public void setOauthDomain(String oauthDomain) {
+		this.oauthDomain = oauthDomain;
+	}
+
+
+	public String getMaterialDomain() {
+		return materialDomain;
+	}
+
+
+	public void setMaterialDomain(String materialDomain) {
+		this.materialDomain = materialDomain;
+	}
+
+
+	public String getWarehouseDomain() {
+		return warehouseDomain;
+	}
+
+
+	public void setWarehouseDomain(String warehouseDomain) {
+		this.warehouseDomain = warehouseDomain;
+	}
+
+
+	public String getOrderDomain() {
+		return orderDomain;
+	}
+
+
+	public void setOrderDomain(String orderDomain) {
+		this.orderDomain = orderDomain;
+	}
+
+
+	public String getReportDomain() {
+		return reportDomain;
+	}
+
+
+	public void setReportDomain(String reportDomain) {
+		this.reportDomain = reportDomain;
+	}
+
+
+	public String getApiUpload() {
+		return apiUpload;
+	}
+
+
+	public void setApiUpload(String apiUpload) {
+		this.apiUpload = apiUpload;
+	}
+
+
 
 }

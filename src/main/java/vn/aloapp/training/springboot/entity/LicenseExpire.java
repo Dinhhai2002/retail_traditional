@@ -11,12 +11,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+
 @Entity
 @Table(name="license_expires")
-public class LicenseExpires  extends BaseEntity{
+public class LicenseExpire  extends BaseEntity{
 
 	/**
 	 * 
@@ -32,6 +30,33 @@ public class LicenseExpires  extends BaseEntity{
 
     @Column(name = "expire_at")
     private String expireAt;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public int getUserId() {
+		return userId;
+	}
+
+	public void setUserId(int userId) {
+		this.userId = userId;
+	}
+
+	public String getExpireAt() {
+		return expireAt;
+	}
+
+	public void setExpireAt(String expireAt) {
+		this.expireAt = expireAt;
+	}
+    
+    
+    
 	
 
 }

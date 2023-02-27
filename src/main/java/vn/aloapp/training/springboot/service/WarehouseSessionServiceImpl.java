@@ -1,7 +1,5 @@
 package vn.aloapp.training.springboot.service;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,23 +21,29 @@ public class WarehouseSessionServiceImpl implements WarehouseSessionService{
 	}
 
 	@Override
-	public WarehouseSession importWarehouseSession(CRUDWarehouseSessionRequest wrapper) throws Exception {
-		return warehouseSessionDao.importWarehouseSession(wrapper);
+	public WarehouseSession importWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
+		return warehouseSessionDao.importWarehouseSession(wrapper, warehouseSessionDetails);
 	}
 
 	@Override
-	public WarehouseSession exportWarehouseSession(CRUDWarehouseSessionRequest wrapper) throws Exception {
-		return warehouseSessionDao.exportWarehouseSession(wrapper);
+	public WarehouseSession exportWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
+		return warehouseSessionDao.exportWarehouseSession(wrapper, warehouseSessionDetails);
 	}
 
 	@Override
-	public WarehouseSession cancelWarehouseSession(CRUDWarehouseSessionRequest wrapper) throws Exception {
-		return warehouseSessionDao.cancelWarehouseSession(wrapper);
+	public WarehouseSession cancelWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
+		return warehouseSessionDao.cancelWarehouseSession(wrapper, warehouseSessionDetails);
 	}
 
 	@Override
-	public WarehouseSession returnWarehouseSession(CRUDWarehouseSessionRequest wrapper) throws Exception {
-		return warehouseSessionDao.returnWarehouseSession(wrapper);
+	public WarehouseSession returnWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
+		return warehouseSessionDao.returnWarehouseSession(wrapper, warehouseSessionDetails);
+	}
+
+	@Override
+	public void spUExportWarehouseSessionFromOrder(long id) throws Exception {
+		warehouseSessionDao.spUExportWarehouseSessionFromOrder(id);
+		
 	}
 
 	

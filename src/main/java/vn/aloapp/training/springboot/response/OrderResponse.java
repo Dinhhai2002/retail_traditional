@@ -1,33 +1,22 @@
-package vn.aloapp.training.springboot.entity;
+package vn.aloapp.training.springboot.response;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import vn.aloapp.training.springboot.entity.Order;
 
 
-@Entity
-@Table(name="orders")
-public class Order extends BaseEntity{
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+public class OrderResponse {
+	
 	private long id;
 
-	@Column(name = "user_id")
+	@JsonProperty("user_id")
 	private int userId;
 
-	@Column(name = "customer_debt_id")
+	@JsonProperty("customer_debt_id")
 	private long customerDebtId;
 
 	private String code;
@@ -36,35 +25,68 @@ public class Order extends BaseEntity{
 
 	private double vat;
 
-	@Column(name = "vat_amount")
+	@JsonProperty("vat_amount")
 	private double vatAmount;
 
-	@Column(name = "discount_percent")
+	@JsonProperty("discount_percent")
 	private double discountPercent;
 
-	@Column(name = "discount_amount")
+	@JsonProperty("discount_amount")
 	private double discountAmount;
 
-	@Column(name = "total_amount")
+	@JsonProperty("total_amount")
 	private double totalAmount;
 
 	private int type;
 
-	@Column(name = "discount_type")
+	@JsonProperty("discount_type")
 	private int discountType;
 
-	@Column(name = "is_include_vat")
+	@JsonProperty("is_include_vat")
 	private int isIncludeVat;
 
 	private int status;
 
-	@Column(name = "receipt_number_no")
+	@JsonProperty("receipt_number_no")
 	private int receiptNumberNo;
 
 	private String description;
+	
+	@JsonProperty("create_at")
+	private Date createAt;
+	
+	 @JsonProperty("list")
+	private ObjectList orderDetails;
+	 
+	 public OrderResponse() {
+		// TODO Auto-generated constructor stub
+	}
+	 
+	public OrderResponse (Order entity) {
+		this.id = entity.getId();
+		this.userId = entity.getUserId();
+		this.customerDebtId = entity.getCustomerDebtId();
+		this.code = entity.getCode();
+		this.amount = entity.getAmount();
+		this.vat = entity.getVat();
+		this.vatAmount = entity.getVatAmount();
+		this.discountPercent = entity.getDiscountPercent();
+		this.discountAmount = entity.getDiscountAmount();
+		this.totalAmount = entity.getTotalAmount();
+		this.type = entity.getType();
+		this.discountType = entity.getDiscountType();
+		this.isIncludeVat = entity.getIsIncludeVat();
+		this.status = entity .getStatus();
+		this.receiptNumberNo = entity.getReceiptNumberNo();
+		this.description = entity.getDescription();
+		this.createAt = entity.getCreatedAt();
+		this.orderDetails = new ObjectList<>();
+	}
+	
+	public List<OrderResponse> mapToList(List<Order> entities) {
+		return entities.stream().map(x -> new OrderResponse(x)).collect(Collectors.toList());
+	}
 
-	
-	
 	public long getId() {
 		return id;
 	}
@@ -193,8 +215,22 @@ public class Order extends BaseEntity{
 		this.description = description;
 	}
 
-	
-	
-	
+	public Date getCreateAt() {
+		return createAt;
+	}
 
+	public void setCreateAt(Date createAt) {
+		this.createAt = createAt;
+	}
+
+	public ObjectList getOrderDetails() {
+		return orderDetails;
+	}
+
+	public void setOrderDetails(ObjectList orderDetails) {
+		this.orderDetails = orderDetails;
+	}
+
+	
+	
 }

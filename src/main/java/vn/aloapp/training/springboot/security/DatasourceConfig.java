@@ -85,7 +85,7 @@ public class DatasourceConfig {
 		
 		hikariConfig.setJdbcUrl("jdbc:mysql://localhost:3306/retail_traditional");
 		hikariConfig.setUsername("root");
-		hikariConfig.setPassword("Dinhhai");
+		hikariConfig.setPassword("D93l11787g@");
 		
 		hikariConfig.setPoolName(poolName);
 		return hikariConfig;

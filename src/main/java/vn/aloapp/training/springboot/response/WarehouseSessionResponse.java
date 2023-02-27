@@ -1,23 +1,15 @@
 package vn.aloapp.training.springboot.response;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import vn.aloapp.training.springboot.entity.WarehouseSession;
 
 
-@Data
-@Setter
-@Getter
-@NoArgsConstructor
+
 public class WarehouseSessionResponse {
 	
 	private long id;
@@ -70,6 +62,10 @@ public class WarehouseSessionResponse {
 	@JsonProperty("list")
 	private ObjectList list;
 	
+	public WarehouseSessionResponse() {
+		
+	}
+	
 	public WarehouseSessionResponse(WarehouseSession entity) {
 		this.id = entity.getId();
 		this.userId = entity.getUserId();
@@ -95,6 +91,160 @@ public class WarehouseSessionResponse {
 	public List<WarehouseSessionResponse> mapToList(List<WarehouseSession> entities) {
 		return entities.stream().map(x -> new WarehouseSessionResponse(x)).collect(Collectors.toList());
 	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public int getUserId() {
+		return userId;
+	}
+
+	public void setUserId(int userId) {
+		this.userId = userId;
+	}
+
+	public int getSupplierId() {
+		return supplierId;
+	}
+
+	public void setSupplierId(int supplierId) {
+		this.supplierId = supplierId;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public double getAmount() {
+		return amount;
+	}
+
+	public void setAmount(double amount) {
+		this.amount = amount;
+	}
+
+	public double getDiscountPercent() {
+		return discountPercent;
+	}
+
+	public void setDiscountPercent(double discountPercent) {
+		this.discountPercent = discountPercent;
+	}
+
+	public double getVat() {
+		return vat;
+	}
+
+	public void setVat(double vat) {
+		this.vat = vat;
+	}
+
+	public double getVatAmount() {
+		return vatAmount;
+	}
+
+	public void setVatAmount(double vatAmount) {
+		this.vatAmount = vatAmount;
+	}
+
+	public double getDiscountAmount() {
+		return discountAmount;
+	}
+
+	public void setDiscountAmount(double discountAmount) {
+		this.discountAmount = discountAmount;
+	}
+
+	public double getTotalAmount() {
+		return totalAmount;
+	}
+
+	public void setTotalAmount(double totalAmount) {
+		this.totalAmount = totalAmount;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public long getAdditionFeeId() {
+		return additionFeeId;
+	}
+
+	public void setAdditionFeeId(long additionFeeId) {
+		this.additionFeeId = additionFeeId;
+	}
+
+	public int getReceiptNumberNo() {
+		return receiptNumberNo;
+	}
+
+	public void setReceiptNumberNo(int receiptNumberNo) {
+		this.receiptNumberNo = receiptNumberNo;
+	}
+
+	public int getDiscountType() {
+		return discountType;
+	}
+
+	public void setDiscountType(int discountType) {
+		this.discountType = discountType;
+	}
+
+	public int getIsIncludeVat() {
+		return isIncludeVat;
+	}
+
+	public void setIsIncludeVat(int isIncludeVat) {
+		this.isIncludeVat = isIncludeVat;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public Date getCreateAt() {
+		return createAt;
+	}
+
+	public void setCreateAt(Date createAt) {
+		this.createAt = createAt;
+	}
+
+	public ObjectList getList() {
+		return list;
+	}
+
+	public void setList(ObjectList list) {
+		this.list = list;
+	}
 	
 
+	
+	
 }

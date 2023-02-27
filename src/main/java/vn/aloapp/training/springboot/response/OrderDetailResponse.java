@@ -1,72 +1,72 @@
 package vn.aloapp.training.springboot.response;
 
+
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.persistence.Column;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import vn.aloapp.training.springboot.entity.Category;
-import vn.aloapp.training.springboot.entity.WarehouseSessionDetail;
+import vn.aloapp.training.springboot.entity.OrderDetail;
 
-public class WarehouseSessionDetailResponse {
+
+public class OrderDetailResponse {
+	
 	
 	private long id;
 
 	@JsonProperty("user_id")
 	private int userId;
-	
-	@JsonProperty("warehouse_session_id")
-	private long warehouseSessionId;
-	
+
+	@JsonProperty("order_id")
+	private long orderId;
+
 	@JsonProperty("category_id")
 	private int categoryId;
-	
+
 	@JsonProperty("category_name")
 	private String categoryName;
-	
+
 	@JsonProperty("material_unit_id")
 	private int materialUnitId;
-	
+
 	@JsonProperty("material_unit_name")
 	private String materialUnitName;
-	
+
 	@JsonProperty("material_id")
 	private int materialId;
-	
+
 	@JsonProperty("material_name")
 	private String materialName;
-	
+
 	private double price;
-	
-	private float quantity;
-	
+
+	@JsonProperty("cost_price")
+	private double costPrice;
+
+	private int quantity;
+
+	private int type;
+
+	@JsonProperty("total_cost_price_amount")
+	private double totalCostPriceAmount;
+
 	@JsonProperty("total_amount")
 	private double totalAmount;
-	
-	@JsonProperty("warehouse_session_type")
-	private int warehouseSessionType;
-	
-	@JsonProperty("warehouse_session_status")
-	private int warehouseSessionStatus;
+
+	private int status;
 	
 	@JsonProperty("create_at")
 	private Date createAt;
 	
-	public WarehouseSessionDetailResponse() {
-		
+	public OrderDetailResponse() {
+		// TODO Auto-generated constructor stub
 	}
 	
-	public WarehouseSessionDetailResponse (WarehouseSessionDetail entity) {
+	public OrderDetailResponse(OrderDetail entity) {
 		this.id = entity.getId();
 		this.userId = entity.getUserId();
-		this.warehouseSessionId = entity.getWarehouseSessionId();
+		this.orderId = entity.getOrderId();
 		this.categoryId = entity.getCategoryId();
 		this.categoryName = entity.getCategoryName();
 		this.materialUnitId = entity.getMaterialUnitId();
@@ -74,169 +74,154 @@ public class WarehouseSessionDetailResponse {
 		this.materialId = entity.getMaterialId();
 		this.materialName = entity.getMaterialName();
 		this.price = entity.getPrice();
+		this.costPrice = entity.getCostPrice();
 		this.quantity = entity.getQuantity();
+		this.type = entity.getType();
+		this.totalCostPriceAmount = entity.getTotalCostPriceAmount();
 		this.totalAmount = entity.getTotalAmount();
-		this.warehouseSessionType = entity.getWarehouseSessionType();
-		this.warehouseSessionStatus = entity.getWarehouseSessionStatus();
-		this.createAt = entity.getCreatedAt();	
-		
+		this.status = entity.getStatus();	
+		this.createAt = entity.getCreatedAt();
 	}
 	
-	
-	public List<WarehouseSessionDetailResponse> mapToList(List<WarehouseSessionDetail> entities) {
-		return entities.stream().map(x -> new WarehouseSessionDetailResponse(x)).collect(Collectors.toList());
+	public List<OrderDetailResponse> mapToList(List<OrderDetail> entities) {
+		return entities.stream().map(x -> new OrderDetailResponse(x)).collect(Collectors.toList());
 	}
-
 
 	public long getId() {
 		return id;
 	}
 
-
 	public void setId(long id) {
 		this.id = id;
 	}
-
 
 	public int getUserId() {
 		return userId;
 	}
 
-
 	public void setUserId(int userId) {
 		this.userId = userId;
 	}
 
-
-	public long getWarehouseSessionId() {
-		return warehouseSessionId;
+	public long getOrderId() {
+		return orderId;
 	}
 
-
-	public void setWarehouseSessionId(long warehouseSessionId) {
-		this.warehouseSessionId = warehouseSessionId;
+	public void setOrderId(long orderId) {
+		this.orderId = orderId;
 	}
-
 
 	public int getCategoryId() {
 		return categoryId;
 	}
 
-
 	public void setCategoryId(int categoryId) {
 		this.categoryId = categoryId;
 	}
-
 
 	public String getCategoryName() {
 		return categoryName;
 	}
 
-
 	public void setCategoryName(String categoryName) {
 		this.categoryName = categoryName;
 	}
-
 
 	public int getMaterialUnitId() {
 		return materialUnitId;
 	}
 
-
 	public void setMaterialUnitId(int materialUnitId) {
 		this.materialUnitId = materialUnitId;
 	}
-
 
 	public String getMaterialUnitName() {
 		return materialUnitName;
 	}
 
-
 	public void setMaterialUnitName(String materialUnitName) {
 		this.materialUnitName = materialUnitName;
 	}
-
 
 	public int getMaterialId() {
 		return materialId;
 	}
 
-
 	public void setMaterialId(int materialId) {
 		this.materialId = materialId;
 	}
-
 
 	public String getMaterialName() {
 		return materialName;
 	}
 
-
 	public void setMaterialName(String materialName) {
 		this.materialName = materialName;
 	}
-
 
 	public double getPrice() {
 		return price;
 	}
 
-
 	public void setPrice(double price) {
 		this.price = price;
 	}
 
+	public double getCostPrice() {
+		return costPrice;
+	}
 
-	public float getQuantity() {
+	public void setCostPrice(double costPrice) {
+		this.costPrice = costPrice;
+	}
+
+	public int getQuantity() {
 		return quantity;
 	}
 
-
-	public void setQuantity(float quantity) {
+	public void setQuantity(int quantity) {
 		this.quantity = quantity;
 	}
 
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public double getTotalCostPriceAmount() {
+		return totalCostPriceAmount;
+	}
+
+	public void setTotalCostPriceAmount(double totalCostPriceAmount) {
+		this.totalCostPriceAmount = totalCostPriceAmount;
+	}
 
 	public double getTotalAmount() {
 		return totalAmount;
 	}
 
-
 	public void setTotalAmount(double totalAmount) {
 		this.totalAmount = totalAmount;
 	}
 
-
-	public int getWarehouseSessionType() {
-		return warehouseSessionType;
+	public int getStatus() {
+		return status;
 	}
 
-
-	public void setWarehouseSessionType(int warehouseSessionType) {
-		this.warehouseSessionType = warehouseSessionType;
+	public void setStatus(int status) {
+		this.status = status;
 	}
-
-
-	public int getWarehouseSessionStatus() {
-		return warehouseSessionStatus;
-	}
-
-
-	public void setWarehouseSessionStatus(int warehouseSessionStatus) {
-		this.warehouseSessionStatus = warehouseSessionStatus;
-	}
-
 
 	public Date getCreateAt() {
 		return createAt;
 	}
 
-
 	public void setCreateAt(Date createAt) {
 		this.createAt = createAt;
 	}
 
-	
-	
+
 }

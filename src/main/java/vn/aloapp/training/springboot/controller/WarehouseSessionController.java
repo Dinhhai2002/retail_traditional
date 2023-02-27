@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import vn.aloapp.training.springboot.entity.WarehouseSession;
 import vn.aloapp.training.springboot.entity.WarehouseSessionDetail;
 import vn.aloapp.training.springboot.request.CRUDWarehouseSessionRequest;
@@ -65,17 +67,19 @@ public class WarehouseSessionController extends BaseController {
 	@PostMapping(value = "/create/import", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> createWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper) throws Exception {
 		BaseResponse response = new BaseResponse();
-		WarehouseSession warehouseSession=warehouseSessionService.importWarehouseSession(wrapper);
+		WarehouseSession warehouseSession=warehouseSessionService.importWarehouseSession(wrapper, new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
 		
 		response.setData(new WarehouseSessionResponse(warehouseSession));
 		
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 	}
+	
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/create/export", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> ExportWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper) throws Exception {
 		BaseResponse response = new BaseResponse();
-		WarehouseSession warehouseSession=warehouseSessionService.exportWarehouseSession(wrapper);
+		WarehouseSession warehouseSession=warehouseSessionService.exportWarehouseSession(wrapper, new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
 		
 		response.setData(new WarehouseSessionResponse(warehouseSession));
 		
@@ -85,7 +89,7 @@ public class WarehouseSessionController extends BaseController {
 	@PostMapping(value = "/create/cancel", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> cancelWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper) throws Exception {
 		BaseResponse response = new BaseResponse();
-		WarehouseSession warehouseSession=warehouseSessionService.cancelWarehouseSession(wrapper);
+		WarehouseSession warehouseSession=warehouseSessionService.cancelWarehouseSession(wrapper, new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
 		
 		response.setData(new WarehouseSessionResponse(warehouseSession));
 		
@@ -96,7 +100,7 @@ public class WarehouseSessionController extends BaseController {
 	@PostMapping(value = "/create/return", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> returnWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper) throws Exception {
 		BaseResponse response = new BaseResponse();
-		WarehouseSession warehouseSession=warehouseSessionService.returnWarehouseSession(wrapper);
+		WarehouseSession warehouseSession=warehouseSessionService.returnWarehouseSession(wrapper, new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
 		
 		response.setData(new WarehouseSessionResponse(warehouseSession));
 		

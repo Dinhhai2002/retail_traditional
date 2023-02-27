@@ -7,13 +7,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Entity
 @Table(name="supplier_order_details")
 public class SupplierOrderDetail extends BaseEntity{
@@ -69,6 +63,137 @@ public class SupplierOrderDetail extends BaseEntity{
 
 	@Column(name = "is_deleted")
 	private int isDeleted;
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public int getSupplierId() {
+		return supplierId;
+	}
+
+	public void setSupplierId(int supplierId) {
+		this.supplierId = supplierId;
+	}
+
+	public long getSupplierOrderId() {
+		return supplierOrderId;
+	}
+
+	public void setSupplierOrderId(long supplierOrderId) {
+		this.supplierOrderId = supplierOrderId;
+	}
+
+	public int getMaterialCategoryId() {
+		return materialCategoryId;
+	}
+
+	public void setMaterialCategoryId(int materialCategoryId) {
+		this.materialCategoryId = materialCategoryId;
+	}
+
+	public String getMaterialCategoryName() {
+		return materialCategoryName;
+	}
+
+	public void setMaterialCategoryName(String materialCategoryName) {
+		this.materialCategoryName = materialCategoryName;
+	}
+
+	public long getUnitId() {
+		return unitId;
+	}
+
+	public void setUnitId(long unitId) {
+		this.unitId = unitId;
+	}
+
+	public String getUnitName() {
+		return unitName;
+	}
+
+	public void setUnitName(String unitName) {
+		this.unitName = unitName;
+	}
+
+	public int getMaterialId() {
+		return materialId;
+	}
+
+	public void setMaterialId(int materialId) {
+		this.materialId = materialId;
+	}
+
+	public String getMaterialName() {
+		return materialName;
+	}
+
+	public void setMaterialName(String materialName) {
+		this.materialName = materialName;
+	}
+
+	public String getAcceptQuantity() {
+		return acceptQuantity;
+	}
+
+	public void setAcceptQuantity(String acceptQuantity) {
+		this.acceptQuantity = acceptQuantity;
+	}
+
+	public double getReturnQuantity() {
+		return returnQuantity;
+	}
+
+	public void setReturnQuantity(double returnQuantity) {
+		this.returnQuantity = returnQuantity;
+	}
+
+	public double getPrice() {
+		return price;
+	}
+
+	public void setPrice(double price) {
+		this.price = price;
+	}
+
+	public double getTotalPrice() {
+		return totalPrice;
+	}
+
+	public void setTotalPrice(double totalPrice) {
+		this.totalPrice = totalPrice;
+	}
+
+	public double getTotalReturnPrice() {
+		return totalReturnPrice;
+	}
+
+	public void setTotalReturnPrice(double totalReturnPrice) {
+		this.totalReturnPrice = totalReturnPrice;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public int getIsDeleted() {
+		return isDeleted;
+	}
+
+	public void setIsDeleted(int isDeleted) {
+		this.isDeleted = isDeleted;
+	}
+	
+	
+	
 
 
 }

@@ -1,5 +1,6 @@
 package vn.aloapp.training.springboot.request;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
@@ -10,8 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
+
 public class CRUDUnitRequest extends BaseRequest{
 	
 
@@ -19,11 +19,38 @@ public class CRUDUnitRequest extends BaseRequest{
 	@Length(max = 255, message = "Không được phép lớn hơn 255 kí tự")
 	private String name;
 
-	@NotNull(message = "Mã người tạo không được null")
+	@Min(value = 0 , message = "nhỏ nhất 0.")
 	@JsonProperty("user_id")
 	private int userId;
 
+	@Length(max = 255, message = "Không được phép lớn hơn 255 kí tự")
 	private String description;
 
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getUserId() {
+		return userId;
+	}
+
+	public void setUserId(int userId) {
+		this.userId = userId;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	
+	
 
 }
