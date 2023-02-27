@@ -9,8 +9,6 @@ import javax.persistence.TemporalType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Getter;
-import lombok.Setter;
 import vn.aloapp.training.springboot.entity.User;
 
 

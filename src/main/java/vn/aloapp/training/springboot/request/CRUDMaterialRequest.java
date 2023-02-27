@@ -8,9 +8,6 @@ import org.hibernate.validator.constraints.Length;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Getter;
-import lombok.Setter;
-
 public class CRUDMaterialRequest extends BaseRequest{
 
 	

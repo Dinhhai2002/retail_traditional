@@ -30,6 +30,11 @@ public class ReportController extends BaseController {
 			@RequestParam(name = "to_date", required = true, defaultValue = "") String toDate,
 			@RequestParam(name = "type", required = true, defaultValue = "1") int type) throws Exception {
 		BaseResponse response = new BaseResponse();
+		if(type <0 || type >5)
+		{
+			response.setMessageError("kiểu nhập vào bắt buộc lớn hơn 0 và nhỏ hơn 6");
+			return new ResponseEntity<BaseResponse>(response, HttpStatus.BAD_REQUEST);
+		}
 		List<Report> statistical = reportService.spGAmountStatistical(week, this.formatDate(fromDate),
 				this.formatDate(toDate), type);
 

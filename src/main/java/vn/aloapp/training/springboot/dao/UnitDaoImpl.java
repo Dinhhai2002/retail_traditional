@@ -11,9 +11,6 @@ import org.springframework.stereotype.Repository;
 
 import vn.aloapp.training.common.enums.StoreProcedureStatusCodeEnum;
 import vn.aloapp.training.common.exception.TechresHttpException;
-import vn.aloapp.training.springboot.entity.Category;
-import vn.aloapp.training.springboot.entity.CategoryModel;
-import vn.aloapp.training.springboot.entity.Material;
 import vn.aloapp.training.springboot.entity.Unit;
 import vn.aloapp.training.springboot.entity.UnitModel;
 
@@ -50,6 +47,7 @@ public class UnitDaoImpl extends AbstractDao<Integer, Unit> implements UnitDao{
 	}
 
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public Unit findOne(Integer id) throws Exception {
 		return (Unit) this.getSession().createCriteria(Unit.class).add(Restrictions.eq("id", id)).uniqueResult();

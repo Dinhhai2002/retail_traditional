@@ -6,12 +6,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.validation.Valid;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import vn.aloapp.training.springboot.request.CRUDMaterialRequest;
 
 @Entity
 @Table(name="materials")
