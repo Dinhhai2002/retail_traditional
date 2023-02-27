@@ -21,6 +21,7 @@ import vn.aloapp.training.springboot.request.CRUDOrderRequest;
 @Repository("orderDao")
 public class OrderDaoImpl extends AbstractDao<Long, Order> implements OrderDao{
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Order spUCreateOrder(CRUDOrderRequest request) throws Exception {
 		StoredProcedureQuery query = this.getSession()

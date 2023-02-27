@@ -31,6 +31,7 @@ public class OrderDetailDaoImpl extends AbstractDao<Long, OrderDetail> implement
 		return this.getSession().createQuery(criteria).getResultList();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<OrderDetail> spGOrderDetailByOrderIds(String orderId) throws Exception {
 		StoredProcedureQuery query = this.getSession()
