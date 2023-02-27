@@ -12,11 +12,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import vn.aloapp.training.springboot.entity.Material;
+import vn.aloapp.training.springboot.entity.User;
 import vn.aloapp.training.springboot.request.CRUDMaterialRequest;
 import vn.aloapp.training.springboot.response.BaseResponse;
 import vn.aloapp.training.springboot.response.MaterialResponse;
@@ -24,7 +26,7 @@ import vn.aloapp.training.springboot.service.MaterialService;
 
 @RestController
 @RequestMapping("/api/v1/materials")
-public class MaterialController {
+public class MaterialController extends BaseController{
 
 	@Autowired
 	MaterialService materialService;
@@ -32,8 +34,11 @@ public class MaterialController {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@GetMapping(value = "/list", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getList(
-			@RequestParam(name = "status", defaultValue = "1", required = false) int status) throws Exception {
+			@RequestParam(name = "status", defaultValue = "1", required = false) int status,
+			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
+		
+		this.accessToken(token);
 		List<Material> list = materialService.spGListMaterial(status);
 
 		response.setData(new MaterialResponse().mapToList(list));
@@ -43,14 +48,17 @@ public class MaterialController {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/create", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDMaterialRequest request) throws Exception {
+	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDMaterialRequest request,
+			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
 
+		User usertoken = this.accessToken(token);
+		
 		Material material = new Material();
 		material.setName(request.getName());
 		material.setAvatar(request.getAvatar());
 		material.setAvatarThumb(request.getAvatarThumb());
-		material.setUserId(request.getUserId());
+		material.setUserId(usertoken.getId());
 		material.setCategoryId(request.getCategoryId());
 		material.setUnitId(request.getUnitId());
 		material.setWastageRate(request.getWastageRate());
@@ -65,8 +73,11 @@ public class MaterialController {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/{id}/update", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> update(@PathVariable("id") Integer id,
-			@Valid @RequestBody CRUDMaterialRequest request) throws Exception {
+			@Valid @RequestBody CRUDMaterialRequest request,
+			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
+		
+		User usertoken = this.accessToken(token);
 		Material material = materialService.findOne(id);
 
 		if (material == null) {
@@ -78,7 +89,7 @@ public class MaterialController {
 		material.setName(request.getName());
 		material.setAvatar(request.getAvatar());
 		material.setAvatarThumb(request.getAvatarThumb());
-		material.setUserId(request.getUserId());
+		material.setUserId(usertoken.getId());
 		material.setCategoryId(request.getCategoryId());
 		material.setUnitId(request.getUnitId());
 		material.setWastageRate(request.getWastageRate());
@@ -95,8 +106,11 @@ public class MaterialController {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@GetMapping(value = "/{id}/detail", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> getById(@PathVariable("id") Integer id) throws Exception {
+	public ResponseEntity<BaseResponse> getById(@PathVariable("id") Integer id,
+			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
+		
+		this.accessToken(token);
 		Material material = materialService.findOne(id);
 
 		if (material == null) {
@@ -112,9 +126,11 @@ public class MaterialController {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/{id}/change-status", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> changeStatus(@PathVariable("id") Integer id) throws Exception {
+	public ResponseEntity<BaseResponse> changeStatus(@PathVariable("id") Integer id,
+			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
 
+		this.accessToken(token);
 		Material material = materialService.findOne(id);
 
 		if (material == null) {

@@ -13,9 +13,6 @@ import lombok.Setter;
 
 public class CRUDCategoryRequest extends BaseRequest{
 
-	@Min(value = 0 , message = "nhỏ nhất 0.")
-	@JsonProperty("user_id")
-    private int userId;
 
 	@NotNull(message = "Tên không được phép null")
 	@NotEmpty(message = "Tên không được được để trống")
@@ -27,13 +24,6 @@ public class CRUDCategoryRequest extends BaseRequest{
 	@Max(value = 100, message = "lớn nhất 100.")
     private int sort;
 
-	public int getUserId() {
-		return userId;
-	}
-
-	public void setUserId(int userId) {
-		this.userId = userId;
-	}
 
 	public String getName() {
 		return name;

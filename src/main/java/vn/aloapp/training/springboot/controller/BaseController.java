@@ -5,13 +5,13 @@ package vn.aloapp.training.springboot.controller;
 
 
 import java.text.ParseException;
-
-
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +21,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import vn.aloapp.training.springboot.entity.User;
 import vn.aloapp.training.springboot.response.BaseResponse;
+import vn.aloapp.training.springboot.service.UserService;
 
 /**
  * @author kelvin
@@ -30,6 +34,9 @@ import vn.aloapp.training.springboot.response.BaseResponse;
 
 @RestController
 public class BaseController {
+	
+	@Autowired
+	UserService userService;
 	
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public final ResponseEntity<BaseResponse> handleUserNotFoundException(MethodArgumentNotValidException ex, WebRequest request) {
@@ -68,7 +75,34 @@ public class BaseController {
         String outputDateStr = outputDateFormat.format(inputDate1);
 
         return outputDateStr;
-
-	
 	}
+	
+	@SuppressWarnings("unused")
+	public User accessToken(String encodeString) throws Exception {
+
+		byte[] decodedBytes = Base64.getMimeDecoder().decode(encodeString);
+		
+		
+
+		String decodedMime = new String(decodedBytes);
+
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			User map = mapper.readValue(decodedMime, User.class);			
+			
+			User user = userService.findOne(map.getId());
+			
+			
+			if (user.getIsLogin() == 0)
+				throw new Exception("tài khoản chưa đăng nhập");
+			if (user != null)
+				return user;
+			else
+				throw new Exception("Thất bại");
+		} catch (Exception e) {
+			throw new Exception("Thất bại");
+		}
+
+	}
+
 }
