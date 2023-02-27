@@ -33,9 +33,17 @@ public class ReportController extends BaseController {
 			@RequestParam(name = "type", required = true, defaultValue = "1") int type,
 			@RequestHeader(value = "authorization") String token )throws Exception {
 		BaseResponse response = new BaseResponse();
+
 		
 		this.accessToken(token);
 		
+
+		if(type <0 || type >5)
+		{
+			response.setMessageError("kiểu nhập vào bắt buộc lớn hơn 0 và nhỏ hơn 6");
+			return new ResponseEntity<BaseResponse>(response, HttpStatus.BAD_REQUEST);
+		}
+
 		List<Report> statistical = reportService.spGAmountStatistical(week, this.formatDate(fromDate),
 				this.formatDate(toDate), type);
 

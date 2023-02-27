@@ -4,16 +4,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import vn.aloapp.training.springboot.entity.Category;
 
 

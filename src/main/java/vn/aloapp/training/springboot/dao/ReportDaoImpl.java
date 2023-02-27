@@ -49,6 +49,7 @@ public class ReportDaoImpl extends AbstractDao<Long, Report> implements ReportDa
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<BestSellerModel> spGBestSeller(int userId, int week, String formatDate, String toDate, int type)
 			throws Exception {
