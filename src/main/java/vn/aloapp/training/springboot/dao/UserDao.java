@@ -17,4 +17,6 @@ public interface UserDao {
 	List<User> spGUsers(String keyword) throws Exception;
 
 	int deleteUser(int id) throws Exception;
+
+	String spULogin(String phone, String password) throws Exception;
 }

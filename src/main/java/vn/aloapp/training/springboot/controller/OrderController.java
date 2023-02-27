@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,10 +28,11 @@ import vn.aloapp.training.springboot.service.OrderService;
 import vn.aloapp.training.springboot.service.WarehouseSessionService;
 import vn.aloapp.training.springboot.entity.Order;
 import vn.aloapp.training.springboot.entity.OrderDetail;
+import vn.aloapp.training.springboot.entity.User;
 
 @RestController
 @RequestMapping("/api/v1/orders")
-public class OrderController {
+public class OrderController extends BaseController{
 
 	@Autowired
 	OrderService orderService;
@@ -43,9 +45,13 @@ public class OrderController {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/create", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDOrderRequest request) throws Exception {
-
+	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDOrderRequest request,
+			@RequestHeader(value = "authorization")  String token) throws Exception {
+		
 		BaseResponse response = new BaseResponse();
+		User usertoken = this.accessToken(token);
+		
+		request.setUserId(usertoken.getId());
 		Order order = orderService.spUCreateOrder(request);
 
 		warehouseSessionService.spUExportWarehouseSessionFromOrder(order.getId());
@@ -57,8 +63,11 @@ public class OrderController {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@GetMapping(value = "/{id}/detail", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> getById(@PathVariable("id") long id) throws Exception {
+	public ResponseEntity<BaseResponse> getById(@PathVariable("id") long id,
+			@RequestHeader(value = "authorization")  String token) throws Exception {
 		BaseResponse response = new BaseResponse();
+		
+		this.accessToken(token);
 		Order order = orderService.findOne(id);
 
 		if (order == null) {
@@ -80,7 +89,10 @@ public class OrderController {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@GetMapping(value = "/get-list", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> getList() throws Exception {
+	public ResponseEntity<BaseResponse> getList(
+			@RequestHeader(value = "authorization")  String token) throws Exception {
+		
+		this.accessToken(token);
 		BaseResponse response = new BaseResponse();
 
 		List<Order> orders = orderService.findAll();

@@ -44,6 +44,12 @@ public class UserServiceImpl implements UserService{
 	public User spUCreateUser(CRUDUserRequest wrapper) throws Exception {
 		return userDao.spUCreateUser(wrapper);
 	}
+
+	@Override
+	public String spULogin(String phone, String password) throws Exception {
+		
+		return userDao.spULogin(phone, password);
+	}
 	
 
 }

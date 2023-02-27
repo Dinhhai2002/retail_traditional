@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import vn.aloapp.training.springboot.entity.Unit;
 import vn.aloapp.training.springboot.entity.UnitModel;
+import vn.aloapp.training.springboot.entity.User;
 import vn.aloapp.training.springboot.request.CRUDUnitRequest;
 import vn.aloapp.training.springboot.request.UnitRequest;
 import vn.aloapp.training.springboot.response.BaseResponse;
@@ -32,7 +35,7 @@ import vn.aloapp.training.springboot.service.UnitService;
  */
 @RestController
 @RequestMapping("/api/v1/units")
-public class UnitController {
+public class UnitController extends BaseController{
 
 	@Autowired
 	UnitService unitService;
@@ -41,11 +44,12 @@ public class UnitController {
 	MaterialService materialService;
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@RequestMapping(value = "/list", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@GetMapping(value = "/list", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getList(
-			@RequestParam(name = "status", defaultValue = "1", required = false) int status) throws Exception {
+			@RequestParam(name = "status", defaultValue = "1", required = false) int status,
+			@RequestHeader(value = "authorization")  String token)throws Exception {
+		this.accessToken(token);
 		BaseResponse response = new BaseResponse();
-
 		response.setData(new UnitResponse().mapToList(unitService.spListUnit(status)));
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 	}
@@ -61,22 +65,26 @@ public class UnitController {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/create", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDUnitRequest unit) throws Exception {
+	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDUnitRequest unit,
+			@RequestHeader(value = "authorization")  String token) throws Exception {
+		
 		BaseResponse response = new BaseResponse();
-
+		User usertoken = this.accessToken(token);
 		response.setData(
-				new UnitResponse(unitService.spUCreateUnit(unit.getUserId(), unit.getName(), unit.getDescription())));
+				new UnitResponse(unitService.spUCreateUnit(usertoken.getId(), unit.getName(), unit.getDescription())));
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	// update Unit
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@RequestMapping(value = "/{id}/update", method = RequestMethod.POST, produces = {
-			MediaType.APPLICATION_JSON_VALUE })
+	@PostMapping(value = "/{id}/update", produces = {MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> update(@PathVariable("id") Integer id,
-			@Valid @RequestBody CRUDUnitRequest unitRequest) throws Exception {
+			@Valid @RequestBody CRUDUnitRequest unitRequest,
+			@RequestHeader(value = "authorization") String token)throws Exception {
 		BaseResponse response = new BaseResponse();
+		
+		User usertoken = this.accessToken(token);
 		Unit unit = unitService.findOne(id);
 
 		if (unit == null) {
@@ -84,7 +92,8 @@ public class UnitController {
 			response.setMessageError(HttpStatus.BAD_REQUEST.name());
 			return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 		}
-		unit.setUserId(unitRequest.getUserId());
+		
+		unit.setUserId(usertoken.getId());
 		unit.setName(unitRequest.getName());
 		unit.setDescription(unitRequest.getDescription());
 
@@ -96,11 +105,14 @@ public class UnitController {
 	}
 
 	// get Unit detail
-
+ 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@RequestMapping(value = "/{id}/detail", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> getById(@PathVariable("id") Integer id) throws Exception {
+	@GetMapping(value = "/{id}/detail", produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResponseEntity<BaseResponse> getById(@PathVariable("id") Integer id,
+			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
+		
+		this.accessToken(token);
 		Unit unit = unitService.findOne(id);
 
 		if (unit == null) {
@@ -117,12 +129,14 @@ public class UnitController {
 	// delete Unit
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@RequestMapping(value = "/{id}/change-status", method = RequestMethod.POST, produces = {
+	@PostMapping(value = "/{id}/change-status", produces = {
 			MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> changeStatus(@PathVariable("id") int id, @RequestBody UnitRequest unitRequest)
+	public ResponseEntity<BaseResponse> changeStatus(@PathVariable("id") int id, 
+			@RequestBody UnitRequest unitRequest,
+			@RequestHeader(value = "authorization") String token)
 			throws Exception {
 		BaseResponse response = new BaseResponse();
-
+		this.accessToken(token);
 		Unit unit = unitService.findOne(id);
 
 		if (unit == null) {

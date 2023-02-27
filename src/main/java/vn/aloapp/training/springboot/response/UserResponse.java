@@ -1,5 +1,6 @@
 package vn.aloapp.training.springboot.response;
 
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,8 +10,6 @@ import javax.persistence.TemporalType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Getter;
-import lombok.Setter;
 import vn.aloapp.training.springboot.entity.User;
 
 
@@ -260,7 +259,8 @@ public class UserResponse {
 	}
 
 	public String getPassword() {
-		return password;
+		byte[] decodedBytes = Base64.getDecoder().decode(password);
+		return new String(decodedBytes);
 	}
 
 	public void setPassword(String password) {
