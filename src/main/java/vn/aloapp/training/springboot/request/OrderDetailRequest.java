@@ -9,13 +9,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class OrderDetailRequest {
 	
 	
-	@Min(value = 0 , message = "nhỏ nhất 0")
+	@Min(value = 1 , message = "nhỏ nhất 1")
 	@Max(value = 10000000 , message = "lớn nhất 10.000.000")
 	@JsonProperty("material_id")
 	private int material_id;
 	
 	
-	@Min(value = 0 , message = "nhỏ nhất 0")
+	@Min(value = 1 , message = "nhỏ nhất 1")
 	@Max(value = 10000 , message = "lớn nhất 1000")
 	private int quantity;
 

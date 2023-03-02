@@ -22,7 +22,8 @@ import vn.aloapp.training.springboot.request.CRUDOrderRequest;
 public class OrderDaoImpl extends AbstractDao<Long, Order> implements OrderDao{
 
 	@Override
-	public Order spUCreateOrder(CRUDOrderRequest request) throws Exception {
+	public Order spUCreateOrder(int id, double vat, double discountPercent, double discountAmount, String description,
+			String orderDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_create_order", Order.class)
 
@@ -36,12 +37,12 @@ public class OrderDaoImpl extends AbstractDao<Long, Order> implements OrderDao{
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 
-		query.setParameter("userId", request.getUserId());
-		query.setParameter("_vat", request.getVat());
-		query.setParameter("discountPercent", request.getDiscountPercent());
-		query.setParameter("discountAmount", request.getDiscountAmount());
-		query.setParameter("_description", request.getDescription());
-		query.setParameter("orderDetails", new ObjectMapper().writeValueAsString(request.getOrderDetails()));
+		query.setParameter("userId", id);
+		query.setParameter("_vat", vat);
+		query.setParameter("discountPercent", discountPercent);
+		query.setParameter("discountAmount", discountAmount);
+		query.setParameter("_description", description);
+		query.setParameter("orderDetails", orderDetails);
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();

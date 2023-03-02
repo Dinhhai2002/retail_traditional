@@ -4,6 +4,9 @@ import java.util.List;
 
 import javax.persistence.ParameterMode;
 import javax.persistence.StoredProcedureQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaUpdate;
+import javax.persistence.criteria.Root;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
@@ -17,7 +20,7 @@ import vn.aloapp.training.springboot.request.CRUDUserRequest;
 public class UserDaoImpl extends AbstractDao<Integer, User> implements UserDao {
 
 	@Override
-	public User spUCreateUser(CRUDUserRequest wrapper) throws Exception {
+	public User spUCreateUser(String firstName, String lastName, int gender, String phone, String password) throws Exception {
 		StoredProcedureQuery query = this.getSession().createStoredProcedureQuery("sp_u_create_user", User.class)
 				.registerStoredProcedureParameter("firstName", String.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("lastName", String.class, ParameterMode.IN)
@@ -29,11 +32,11 @@ public class UserDaoImpl extends AbstractDao<Integer, User> implements UserDao {
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 		
-		query.setParameter("firstName", wrapper.getFirstName());
-		query.setParameter("lastName",  wrapper.getLastName());
-		query.setParameter("_gender", wrapper.getGender());
-		query.setParameter("_phone", wrapper.getPhone());
-		query.setParameter("_password", wrapper.getPassword());
+		query.setParameter("firstName", firstName);
+		query.setParameter("lastName", lastName);
+		query.setParameter("_gender", gender);
+		query.setParameter("_phone", phone);
+		query.setParameter("_password", password);
 
 		
 		int statusCode = (int) query.getOutputParameterValue("status_code");
@@ -173,7 +176,13 @@ public class UserDaoImpl extends AbstractDao<Integer, User> implements UserDao {
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
-		String accessToken = query.getOutputParameterValue("accessToken").toString();
+		String accessToken;
+		
+		if(query.getOutputParameterValue("accessToken")!=null)
+		{
+			accessToken=query.getOutputParameterValue("accessToken").toString();
+		}
+		else accessToken="";
 
 		switch (StoreProcedureStatusCodeEnum.valueOf(statusCode)) {
 		case SUCCESS:
@@ -183,5 +192,17 @@ public class UserDaoImpl extends AbstractDao<Integer, User> implements UserDao {
 		default:
 			throw new Exception(messageError);
 		}
+	}
+
+	@Override
+	public String signOut(User user) throws Exception {
+		CriteriaBuilder builder = this.getBuilder();
+		CriteriaUpdate<User> update = builder.createCriteriaUpdate(User.class);
+		Root<User> root = update.from(User.class);
+		update.set("accessToken", "").where(builder.equal(root.get("id"), user.getId()));
+		this.getSession().createQuery(update).executeUpdate();
+		
+		
+		return "logout success";
 	}
 }

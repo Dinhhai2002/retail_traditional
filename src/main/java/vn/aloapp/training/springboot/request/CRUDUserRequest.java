@@ -26,18 +26,15 @@ public class CRUDUserRequest extends BaseRequest {
 	private String lastName;
 	
 	
-
 	@Min(value = 0 , message = "nhỏ nhất 0.")
 	@Max(value = 1, message = "lớn nhất 1.")
 	private int gender;
 	
-
 	@Pattern(regexp="(^$|[0-9]{10})", message = " chỉ được phép nhập số và tối đa 10 số.")
 	private String phone;
 
 	@Length(max = 255, message = "Không được phép lớn hơn 255 kí tự")
 	private String password;
-
 
 
 	public String getFirstName() {

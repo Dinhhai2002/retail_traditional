@@ -8,7 +8,8 @@ import vn.aloapp.training.springboot.request.CRUDOrderRequest;
 
 public interface OrderDao {
 
-	Order spUCreateOrder(CRUDOrderRequest request) throws Exception;
+	Order spUCreateOrder(int id, double vat, double discountPercent, double discountAmount, String description,
+			String orderDetails) throws Exception;
 
 	Order findOne(long id)  throws Exception;
 

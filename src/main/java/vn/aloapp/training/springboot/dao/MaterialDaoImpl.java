@@ -147,8 +147,17 @@ public class MaterialDaoImpl extends AbstractDao<Integer, Material> implements M
 
 		query.setParameter("_id", id);
 
-		query.getOutputParameterValue("status_code");
-		query.getOutputParameterValue("message_error").toString();
+		int statusCode = (int) query.getOutputParameterValue("status_code");
+		String messageError = query.getOutputParameterValue("message_error").toString();
+		
+		switch (StoreProcedureStatusCodeEnum.valueOf(statusCode)) {
+		case SUCCESS:
+			break;
+		case INPUT_INVALID:
+			throw new TechresHttpException(HttpStatus.BAD_REQUEST, messageError);
+		default:
+			throw new Exception(messageError);
+		}
 
 	}
 
@@ -187,8 +196,18 @@ public class MaterialDaoImpl extends AbstractDao<Integer, Material> implements M
 
 		query.setParameter("categoryId", categoryId);
 
-		query.getOutputParameterValue("status_code");
-		query.getOutputParameterValue("message_error").toString();
+		int statusCode = (int) query.getOutputParameterValue("status_code");
+		String messageError = query.getOutputParameterValue("message_error").toString();
+		
+		switch (StoreProcedureStatusCodeEnum.valueOf(statusCode)) {
+		case SUCCESS:
+			break;
+		case INPUT_INVALID:
+			throw new TechresHttpException(HttpStatus.BAD_REQUEST, messageError);
+		default:
+			throw new Exception(messageError);
+		}
+		
 
 	}
 
@@ -203,8 +222,18 @@ public class MaterialDaoImpl extends AbstractDao<Integer, Material> implements M
 
 		query.setParameter("unitId", id);
 
-		query.getOutputParameterValue("status_code");
-		query.getOutputParameterValue("message_error").toString();
+		
+		int statusCode = (int) query.getOutputParameterValue("status_code");
+		String messageError = query.getOutputParameterValue("message_error").toString();
+
+		switch (StoreProcedureStatusCodeEnum.valueOf(statusCode)) {
+		case SUCCESS:
+			break;
+		case INPUT_INVALID:
+			throw new TechresHttpException(HttpStatus.BAD_REQUEST, messageError);
+		default:
+			throw new Exception(messageError);
+		}
 		
 	}
 

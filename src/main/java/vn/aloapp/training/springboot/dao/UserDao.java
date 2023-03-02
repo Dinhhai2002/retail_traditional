@@ -7,7 +7,7 @@ import vn.aloapp.training.springboot.request.CRUDUserRequest;
 
 public interface UserDao {
 	
-	User spUCreateUser(CRUDUserRequest wrapper) throws Exception;
+	User spUCreateUser(String firstName, String lastName, int gender, String phone, String password) throws Exception;
 
 	User findOne(int id) throws Exception;
 
@@ -19,4 +19,6 @@ public interface UserDao {
 	int deleteUser(int id) throws Exception;
 
 	String spULogin(String phone, String password) throws Exception;
+
+	String signOut(User user) throws Exception;
 }

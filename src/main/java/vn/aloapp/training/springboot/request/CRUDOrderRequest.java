@@ -13,11 +13,7 @@ import org.hibernate.validator.constraints.Length;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
-public class CRUDOrderRequest {
-	
-	@Min(value = 0 , message = "nhỏ nhất 0.")
-	@JsonProperty("user_id")
-	private int userId;
+public class CRUDOrderRequest {	
 	
 	@Min(value = 0,message="nhỏ nhất là 0%")
 	@Max(value = 100,message="lớn nhất là 100%")
@@ -42,15 +38,6 @@ public class CRUDOrderRequest {
 	@JsonProperty("order_details")
 	private List<OrderDetailRequest> orderDetails;
 
-	
-	
-	public int getUserId() {
-		return userId;
-	}
-
-	public void setUserId(int userId) {
-		this.userId = userId;
-	}
 
 	public double getVat() {
 		return vat;

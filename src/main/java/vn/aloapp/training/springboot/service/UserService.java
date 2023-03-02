@@ -6,7 +6,6 @@ import vn.aloapp.training.springboot.entity.User;
 import vn.aloapp.training.springboot.request.CRUDUserRequest;
 
 public interface UserService {
-	User spUCreateUser(CRUDUserRequest wrapper) throws Exception;
 
 	User findOne(int id) throws Exception;
 
@@ -18,5 +17,9 @@ public interface UserService {
 	int deleteUser(int id) throws Exception;
 
 	String spULogin(String phone, String password) throws Exception;
+
+	User spUCreateUser(String firstName, String lastName, int gender, String phone, String password) throws Exception;
+
+	String signOut(User user) throws Exception;
 
 }

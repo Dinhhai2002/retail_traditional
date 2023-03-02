@@ -19,8 +19,9 @@ public class OrderServiceImpl implements OrderService {
 	OrderDao orderDao;
 
 	@Override
-	public Order spUCreateOrder(CRUDOrderRequest request) throws Exception {
-		return orderDao.spUCreateOrder(request);
+	public Order spUCreateOrder(int id, double vat, double discountPercent, double discountAmount, String description,
+			String orderDetails) throws Exception {
+		return orderDao.spUCreateOrder(id, vat, discountPercent, discountAmount, description, orderDetails);
 	}
 
 	@Override

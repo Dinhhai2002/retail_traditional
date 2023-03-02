@@ -101,8 +101,17 @@ public class UnitDaoImpl extends AbstractDao<Integer, Unit> implements UnitDao{
 		query.setParameter("_id", id);
 		query.setParameter("_status", status);
 		
-		query.getOutputParameterValue("status_code");
-		query.getOutputParameterValue("message_error").toString();
+		int statusCode = (int) query.getOutputParameterValue("status_code");
+		String messageError = query.getOutputParameterValue("message_error").toString();
+		
+		switch (StoreProcedureStatusCodeEnum.valueOf(statusCode)) {
+		case SUCCESS:
+			break;
+		case INPUT_INVALID:
+			throw new TechresHttpException(HttpStatus.BAD_REQUEST, messageError);
+		default:
+			throw new Exception(messageError);
+		}
 		
 	}
 

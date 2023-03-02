@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import vn.aloapp.training.springboot.entity.User;
 import vn.aloapp.training.springboot.entity.UserModel;
 import vn.aloapp.training.springboot.request.CRUDUserRequest;
 import vn.aloapp.training.springboot.response.BaseResponse;
@@ -24,7 +26,7 @@ import vn.aloapp.training.springboot.service.UserService;
 
 @RestController
 @RequestMapping("/api/v1/users")
-public class UserController {
+public class UserController extends BaseController{
 	@Autowired
 	UserService userService;
 	@Autowired
@@ -32,7 +34,7 @@ public class UserController {
 	int otpvalue;
 	
 	
-	@PostMapping("/login")
+	@PostMapping("/sign-in")
 	public ResponseEntity<BaseResponse> spULogin(@Valid @RequestBody UserModel request) throws Exception {
 		BaseResponse response = new BaseResponse();
 		
@@ -47,10 +49,33 @@ public class UserController {
 		BaseResponse response = new BaseResponse();		
 	
 		wrapper.setPassword(Base64.getEncoder().encodeToString(wrapper.getPassword().getBytes()));
-		response.setData(new UserResponse(userService.spUCreateUser(wrapper)));
+		response.setData(new UserResponse(userService.spUCreateUser(wrapper.getFirstName(), 
+																	wrapper.getLastName(), 
+																	wrapper.getGender(),
+																	wrapper.getPhone(),
+																	wrapper.getPassword()
+																	)));
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 	}
 
+	
+	@PostMapping("/sign-out")
+	public ResponseEntity<BaseResponse> signOut(@RequestHeader(value = "authorization")  String token) throws Exception {
+		BaseResponse response = new BaseResponse();
+		
+		User user = this.accessToken(token);
+		response.setData(userService.signOut(user));
+		
+		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	

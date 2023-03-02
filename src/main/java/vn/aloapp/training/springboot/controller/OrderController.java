@@ -51,8 +51,13 @@ public class OrderController extends BaseController{
 		BaseResponse response = new BaseResponse();
 		User usertoken = this.accessToken(token);
 		
-		request.setUserId(usertoken.getId());
-		Order order = orderService.spUCreateOrder(request);
+		Order order = orderService.spUCreateOrder(usertoken.getId(), 
+												  request.getVat(), 
+												  request.getDiscountPercent(),
+												  request.getDiscountAmount(),
+												  request.getDescription(),
+												  new ObjectMapper().writeValueAsString(request.getOrderDetails())
+												  );
 
 		warehouseSessionService.spUExportWarehouseSessionFromOrder(order.getId());
 

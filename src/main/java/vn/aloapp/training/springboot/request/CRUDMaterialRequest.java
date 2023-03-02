@@ -18,9 +18,6 @@ public class CRUDMaterialRequest extends BaseRequest{
 	@Length(max = 255, message = "Không được phép lớn hơn 255 kí tự")
 	private String name;
 
-	@Min(value = 0, message = "nhỏ nhất 0")
-	@JsonProperty("user_id")
-	private int userId;
 
 	@Length(max = 255, message = "Không được phép lớn hơn 255 kí tự")
 	private String avatar;
@@ -64,14 +61,6 @@ public class CRUDMaterialRequest extends BaseRequest{
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public int getUserId() {
-		return userId;
-	}
-
-	public void setUserId(int userId) {
-		this.userId = userId;
 	}
 
 	public String getAvatar() {
