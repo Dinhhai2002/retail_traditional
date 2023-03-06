@@ -86,7 +86,7 @@ public class MaterialController extends BaseController{
 																				usertoken.getId(),
 																				request.getCategoryId(),
 																				request.getUnitId(),
-																				request.getName(),
+																				request.getName().trim(),
 																				request.getWastageRate(),
 																				request.getOutStockAlertQuantity(),
 																				request.getRetailPrice(),
@@ -127,7 +127,7 @@ public class MaterialController extends BaseController{
 			return new ResponseEntity<>(response, HttpStatus.OK);
 		}	
 
-		material.setName(request.getName());
+		material.setName(request.getName().trim());
 		material.setUserId(usertoken.getId());
 		material.setCategoryId(request.getCategoryId());
 		material.setUnitId(request.getUnitId());

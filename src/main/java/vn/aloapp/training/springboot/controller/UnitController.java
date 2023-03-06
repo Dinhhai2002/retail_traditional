@@ -72,7 +72,7 @@ public class UnitController extends BaseController{
 		User usertoken = this.accessToken(token);
 		
 		response.setData(
-				new UnitResponse(unitService.spUCreateUnit(usertoken.getId(), unit.getName(), unit.getDescription())));
+				new UnitResponse(unitService.spUCreateUnit(usertoken.getId(), unit.getName().trim(), unit.getDescription())));
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -93,7 +93,7 @@ public class UnitController extends BaseController{
 		}
 		
 		unit.setUserId(usertoken.getId());
-		unit.setName(unitRequest.getName());
+		unit.setName(unitRequest.getName().trim());
 		unit.setDescription(unitRequest.getDescription());
 
 
