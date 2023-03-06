@@ -18,7 +18,6 @@ public class Report {
 	private BigDecimal revenue;
 	private BigDecimal cost;
 	private BigDecimal profit;
-	private BigDecimal inventory;
 	
 	
 	public String getDate() {
@@ -47,14 +46,6 @@ public class Report {
 	}
 	public void setProfit(BigDecimal profit) {
 		this.profit = profit;
-	}
-	public BigDecimal getInventory() {
-		return inventory;
-	}
-	public void setInventory(BigDecimal inventory) {
-		this.inventory = inventory;
-	}
-	
-	
+	}	
 	
 }

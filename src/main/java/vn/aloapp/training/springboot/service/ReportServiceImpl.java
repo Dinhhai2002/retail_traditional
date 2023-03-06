@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import vn.aloapp.training.springboot.dao.ReportDao;
 import vn.aloapp.training.springboot.entity.BestSellerModel;
+import vn.aloapp.training.springboot.entity.Inventory;
 import vn.aloapp.training.springboot.entity.Report;
 
 @Service
@@ -22,9 +23,14 @@ public class ReportServiceImpl implements ReportService {
 	}
 
 	@Override
-	public List<BestSellerModel> spGBestSeller(int userId, int week, String formatDate, String toDate, int type)
+	public List<BestSellerModel> spGReportBestSeller(int userId, int week, String formatDate, String toDate, int type)
 			throws Exception {
-		return reportDao.spGBestSeller(userId, week, formatDate, toDate, type);
+		return reportDao.spGReportBestSeller(userId, week, formatDate, toDate, type);
+	}
+
+	@Override
+	public List<Inventory> spGReportInventory(int userId) throws Exception {
+		return reportDao.spGReportInventory(userId);
 	}
 
 	

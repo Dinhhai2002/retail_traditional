@@ -31,118 +31,98 @@ import vn.aloapp.training.springboot.service.WarehouseSessionService;
 @RestController
 @RequestMapping("/api/v1/warehouse-sessions")
 public class WarehouseSessionController extends BaseController {
-	
+
 	@Autowired
 	WarehouseSessionService warehouseSessionService;
-	
+
 	@Autowired
-	WarehouseSessionDetailService warehouseSessionDetailService; 
-	
-	
-	@GetMapping(value = "/{id}/detail",produces = { MediaType.APPLICATION_JSON_VALUE })
+	WarehouseSessionDetailService warehouseSessionDetailService;
+
+	@GetMapping(value = "/{id}/detail", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getById(@PathVariable("id") Long id,
 			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
-		
+
 		this.accessToken(token);
 		WarehouseSession warehouseSession = warehouseSessionService.findOne(id);
 
 		if (warehouseSession == null) {
 			response.setStatus(HttpStatus.BAD_REQUEST);
-			response.setMessageError(HttpStatus.BAD_REQUEST.name());
+			response.setMessageError("không tìm thấy mã: " + id);
 			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
-		List<WarehouseSessionDetail> warehouseSessionDetails = warehouseSessionDetailService.spGWarehouseSessionDetailByWarehouseSessionId(warehouseSession.getId());
+		List<WarehouseSessionDetail> warehouseSessionDetails = warehouseSessionDetailService
+				.spGWarehouseSessionDetailByWarehouseSessionId(warehouseSession.getId());
 
-		List<WarehouseSessionDetailResponse> warehouseSessionDetailResponses = new WarehouseSessionDetailResponse().mapToList(warehouseSessionDetails);
-		
+		List<WarehouseSessionDetailResponse> warehouseSessionDetailResponses = new WarehouseSessionDetailResponse()
+				.mapToList(warehouseSessionDetails);
+
 		WarehouseSessionResponse warehouseSessionResponse = new WarehouseSessionResponse(warehouseSession);
 		warehouseSessionResponse.setList(warehouseSessionDetailResponses);
-		
+
 		response.setData(warehouseSessionResponse);
 
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 	}
-	
 
 	@PostMapping(value = "/create/import", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> createWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
+	public ResponseEntity<BaseResponse> createWarehouseSession(@Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
 			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
-		
+
 		User usertoken = this.accessToken(token);
-		
+
 		WarehouseSession warehouseSession = warehouseSessionService.importWarehouseSession(usertoken.getId(),
-																						   wrapper.getDiscountPercent(),
-																						   wrapper.getVat(),
-																						   wrapper.getDiscountAmount(),
-																						   wrapper.getDescription(),
-																						   new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
-		
+				wrapper.getDiscountPercent(), wrapper.getVat(), wrapper.getDiscountAmount(), wrapper.getDescription(),
+				new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
+
 		response.setData(new WarehouseSessionResponse(warehouseSession));
-		
+
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 	}
-	
-	
+
 	@PostMapping(value = "/create/export", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> exportWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
-			@RequestHeader(value = "authorization") String token) throws Exception {
-		BaseResponse response = new BaseResponse();
-		User usertoken = this.accessToken(token);
-		
-		WarehouseSession warehouseSession=warehouseSessionService.exportWarehouseSession(usertoken.getId(),
-																						 wrapper.getDiscountPercent(),
-																						 wrapper.getVat(),
-																						 wrapper.getDiscountAmount(),
-																						 wrapper.getDescription(),
-																						 new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
-		response.setData(new WarehouseSessionResponse(warehouseSession));
-		
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
-	}
-	
-	
-	
-	@PostMapping(value = "/create/cancel", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> cancelWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
-			@RequestHeader(value = "authorization") String token) throws Exception {
-		BaseResponse response = new BaseResponse();
-		User usertoken = this.accessToken(token);
-		
-		WarehouseSession warehouseSession=warehouseSessionService.cancelWarehouseSession(usertoken.getId(),
-																						 wrapper.getDiscountPercent(),
-																						 wrapper.getVat(),
-																						 wrapper.getDiscountAmount(),
-																						 wrapper.getDescription(),
-																						 new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
-		
-		response.setData(new WarehouseSessionResponse(warehouseSession));
-		
-		return new ResponseEntity<>(response, HttpStatus.OK);
-	}
-	
-	
-	
-	@PostMapping(value = "/create/return", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> returnWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
+	public ResponseEntity<BaseResponse> exportWarehouseSession(@Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
 			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
 		User usertoken = this.accessToken(token);
 
-		
-		WarehouseSession warehouseSession=warehouseSessionService.returnWarehouseSession(usertoken.getId(),
-																						 wrapper.getDiscountPercent(),
-																						 wrapper.getVat(),
-																						 wrapper.getDiscountAmount(),
-																						 wrapper.getDescription(),
-																						 new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
-		
+		WarehouseSession warehouseSession = warehouseSessionService.exportWarehouseSession(usertoken.getId(),
+				wrapper.getDiscountPercent(), wrapper.getVat(), wrapper.getDiscountAmount(), wrapper.getDescription(),
+				new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
 		response.setData(new WarehouseSessionResponse(warehouseSession));
-		
+
+		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+	}
+
+	@PostMapping(value = "/create/cancel", produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResponseEntity<BaseResponse> cancelWarehouseSession(@Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
+			@RequestHeader(value = "authorization") String token) throws Exception {
+		BaseResponse response = new BaseResponse();
+		User usertoken = this.accessToken(token);
+
+		WarehouseSession warehouseSession = warehouseSessionService.cancelWarehouseSession(usertoken.getId(),
+				wrapper.getDiscountPercent(), wrapper.getVat(), wrapper.getDiscountAmount(), wrapper.getDescription(),
+				new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
+
+		response.setData(new WarehouseSessionResponse(warehouseSession));
+
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
-	
+
+	@PostMapping(value = "/create/return", produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResponseEntity<BaseResponse> returnWarehouseSession(@Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
+			@RequestHeader(value = "authorization") String token) throws Exception {
+		BaseResponse response = new BaseResponse();
+		User usertoken = this.accessToken(token);
+
+		WarehouseSession warehouseSession = warehouseSessionService.returnWarehouseSession(usertoken.getId(),
+				wrapper.getDiscountPercent(), wrapper.getVat(), wrapper.getDiscountAmount(), wrapper.getDescription(),
+				new ObjectMapper().writeValueAsString(wrapper.getWarehouseSessionDetails()));
+
+		response.setData(new WarehouseSessionResponse(warehouseSession));
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
 
 }

@@ -58,7 +58,7 @@ public class CategoryController extends BaseController {
 		BaseResponse response = new BaseResponse();
 
 		response.setData(new CategoryResponse(categoryService.spUCreateCategory(this.accessToken(token).getId(),
-				request.getName(), request.getSort(), request.getDescription())));
+				request.getName().trim(), request.getSort(), request.getDescription())));
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -79,7 +79,7 @@ public class CategoryController extends BaseController {
 			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
 
-		category.setName(request.getName());
+		category.setName(request.getName().trim());
 		category.setUserId(usertoken.getId());
 		category.setSort(request.getSort());
 		category.setDescription(request.getDescription());

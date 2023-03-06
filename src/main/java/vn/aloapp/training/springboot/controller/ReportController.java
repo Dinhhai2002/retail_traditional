@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import vn.aloapp.training.springboot.entity.BestSellerModel;
+import vn.aloapp.training.springboot.entity.Inventory;
 import vn.aloapp.training.springboot.entity.Report;
 import vn.aloapp.training.springboot.entity.User;
 import vn.aloapp.training.springboot.response.BaseResponse;
+import vn.aloapp.training.springboot.response.InventoryResponse;
 import vn.aloapp.training.springboot.service.ReportService;
 
 @RestController
@@ -77,10 +79,21 @@ public class ReportController extends BaseController {
 		
 		User usertoken = this.accessToken(token);
 		
-		List<BestSellerModel> bestSeller = reportService.spGBestSeller(usertoken.getId(), week, this.formatDate(fromDate),
+		List<BestSellerModel> bestSeller = reportService.spGReportBestSeller(usertoken.getId(), week, this.formatDate(fromDate),
 				this.formatDate(toDate), type);
 
 		response.setData(bestSeller);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@GetMapping(value = "/inventory", produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResponseEntity<BaseResponse> bestSeller(@RequestHeader(value = "authorization") String token ) throws Exception {
+		BaseResponse response = new BaseResponse();
+		
+		List<Inventory> inventories = reportService.spGReportInventory(accessToken(token).getId());
+		
+		response.setData(new InventoryResponse().mapToList(inventories));
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
