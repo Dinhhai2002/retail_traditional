@@ -1,5 +1,7 @@
 package vn.aloapp.training.springboot.response;
 
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,55 +16,61 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import vn.aloapp.training.common.UtilsResponse;
 import vn.aloapp.training.springboot.entity.Category;
 
+public class CategoryResponse{
 
-public class CategoryResponse {
-	
 	private int id;
-	
+
 	@JsonProperty("user_id")
-    private int userId;
+	private int userId;
 
-    private String code;
+	private String code;
 
-    private String name;
+	private String name;
 
-    @JsonProperty("prefix_name")
-    private String prefixName;
+	@JsonProperty("prefix_name")
+	private String prefixName;
 
-    @JsonProperty("normalize_name")
-    private String normalizeName;
+	@JsonProperty("normalize_name")
+	private String normalizeName;
 
-    private String description;
+	private String description;
 
-    private int sort;
-    
-    @JsonProperty("list")
-	private ObjectList list;
+	private int sort;
 
-    private int status;
-    
-	@JsonProperty("create_at")
-	private Date createAt;
+	@JsonProperty("list")
+	private List<Object> list;
+
+	private int status;
+
+	@JsonProperty("created_at")
+	private String createdAt;
 	
-	public CategoryResponse () {
-		
+
+	public CategoryResponse() {
+
 	}
-    
-    public CategoryResponse (Category entity) {
+
+	public CategoryResponse(Category entity) {
 		this.id = entity.getId();
-		this.userId = entity.getId();
+		this.userId = entity.getUserId();
 		this.code = entity.getCode();
 		this.name = entity.getName();
 		this.prefixName = entity.getPrefixName();
 		this.normalizeName = entity.getNormalizeName();
 		this.description = entity.getDescription();
 		this.sort = entity.getSort();
-		this.list = new ObjectList<>();
-		this.status = entity.getStatus();
-		this.createAt = entity.getCreatedAt();
+		this.list = new ArrayList<>();
+		this.status = entity.getStatus() ? 1 : 0;
+		try {
+			this.createdAt = UtilsResponse.formatDate(entity.getCreatedAt().toString());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 		
+
 	}
 
 	public List<CategoryResponse> mapToList(List<Category> entities) {
@@ -133,14 +141,6 @@ public class CategoryResponse {
 		this.sort = sort;
 	}
 
-	public ObjectList getList() {
-		return list;
-	}
-
-	public void setList(ObjectList list) {
-		this.list = list;
-	}
-
 	public int getStatus() {
 		return status;
 	}
@@ -149,14 +149,20 @@ public class CategoryResponse {
 		this.status = status;
 	}
 
-	public Date getCreateAt() {
-		return createAt;
+	public String getCreatedAt() {
+		return createdAt;
 	}
 
-	public void setCreateAt(Date createAt) {
-		this.createAt = createAt;
+	public void setCreatedAt(String createdAt) {
+		this.createdAt = createdAt;
 	}
 
-	
-	
+	public List<Object> getList() {
+		return list;
+	}
+
+	public void setList(List<Object> list) {
+		this.list = list;
+	}
+
 }

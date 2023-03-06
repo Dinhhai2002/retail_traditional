@@ -1,13 +1,9 @@
 package vn.aloapp.training.springboot.entity;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
-
-import lombok.Getter;
-import lombok.Setter;
 
 
 @Entity
@@ -19,8 +15,8 @@ public class Report {
 	@Id
 	private String date;
 	
-	private BigDecimal amountImport;
-	private BigDecimal amountExport;
+	private BigDecimal revenue;
+	private BigDecimal cost;
 	private BigDecimal profit;
 	private BigDecimal inventory;
 	
@@ -31,17 +27,20 @@ public class Report {
 	public void setDate(String date) {
 		this.date = date;
 	}
-	public BigDecimal getAmountImport() {
-		return amountImport;
+	
+	
+	
+	public BigDecimal getRevenue() {
+		return revenue;
 	}
-	public void setAmountImport(BigDecimal amountImport) {
-		this.amountImport = amountImport;
+	public void setRevenue(BigDecimal revenue) {
+		this.revenue = revenue;
 	}
-	public BigDecimal getAmountExport() {
-		return amountExport;
+	public BigDecimal getCost() {
+		return cost;
 	}
-	public void setAmountExport(BigDecimal amountExport) {
-		this.amountExport = amountExport;
+	public void setCost(BigDecimal cost) {
+		this.cost = cost;
 	}
 	public BigDecimal getProfit() {
 		return profit;

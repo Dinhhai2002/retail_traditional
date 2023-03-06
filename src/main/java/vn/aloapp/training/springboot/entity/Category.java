@@ -8,8 +8,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="categories")
-public class Category extends BaseEntity{
+@Table(name = "categories")
+public class Category extends BaseEntity {
 
 	/**
 	 * 
@@ -19,26 +19,25 @@ public class Category extends BaseEntity{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
-	
+
 	@Column(name = "user_id")
-    private int userId;
+	private int userId;
 
-    private String code;
+	private String code;
 
-    private String name;
+	private String name;
 
 	@Column(name = "prefix_name")
-    private String prefixName;
+	private String prefixName;
 
-    @Column(name = "normalize_name")
-    private String normalizeName;
+	@Column(name = "normalize_name")
+	private String normalizeName;
 
-    private String description;
+	private String description;
 
-    private int sort;
+	private int sort;
 
-    private int status;
-    
+	private boolean status;
 
 	public int getId() {
 		return id;
@@ -104,18 +103,12 @@ public class Category extends BaseEntity{
 		this.sort = sort;
 	}
 
-	public int getStatus() {
+	public boolean getStatus() {
 		return status;
 	}
 
-	public void setStatus(int status) {
+	public void setStatus(boolean status) {
 		this.status = status;
 	}
-    
-    
-    
-
-
-
 
 }

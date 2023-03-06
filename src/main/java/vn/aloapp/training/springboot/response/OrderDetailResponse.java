@@ -1,12 +1,14 @@
 package vn.aloapp.training.springboot.response;
 
 
-import java.util.Date;
+import java.math.BigDecimal;
+import java.text.ParseException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import vn.aloapp.training.common.UtilsResponse;
 import vn.aloapp.training.springboot.entity.OrderDetail;
 
 
@@ -44,7 +46,7 @@ public class OrderDetailResponse {
 	@JsonProperty("cost_price")
 	private double costPrice;
 
-	private int quantity;
+	private BigDecimal quantity;
 
 	private int type;
 
@@ -56,11 +58,10 @@ public class OrderDetailResponse {
 
 	private int status;
 	
-	@JsonProperty("create_at")
-	private Date createAt;
+	@JsonProperty("created_at")
+	private String createdAt;
 	
 	public OrderDetailResponse() {
-		// TODO Auto-generated constructor stub
 	}
 	
 	public OrderDetailResponse(OrderDetail entity) {
@@ -80,7 +81,11 @@ public class OrderDetailResponse {
 		this.totalCostPriceAmount = entity.getTotalCostPriceAmount();
 		this.totalAmount = entity.getTotalAmount();
 		this.status = entity.getStatus();	
-		this.createAt = entity.getCreatedAt();
+		try {
+			this.createdAt = UtilsResponse.formatDate(entity.getCreatedAt().toString());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public List<OrderDetailResponse> mapToList(List<OrderDetail> entities) {
@@ -175,11 +180,11 @@ public class OrderDetailResponse {
 		this.costPrice = costPrice;
 	}
 
-	public int getQuantity() {
+	public BigDecimal getQuantity() {
 		return quantity;
 	}
 
-	public void setQuantity(int quantity) {
+	public void setQuantity(BigDecimal quantity) {
 		this.quantity = quantity;
 	}
 
@@ -215,12 +220,12 @@ public class OrderDetailResponse {
 		this.status = status;
 	}
 
-	public Date getCreateAt() {
-		return createAt;
+	public String getCreatedAt() {
+		return createdAt;
 	}
 
-	public void setCreateAt(Date createAt) {
-		this.createAt = createAt;
+	public void setCreatedAt(String createdAt) {
+		this.createdAt = createdAt;
 	}
 
 

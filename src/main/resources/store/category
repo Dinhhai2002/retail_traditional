@@ -1,7 +1,8 @@
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_categories`(
 	IN  `userId` INT(11),
 	IN  `_status` TINYINT(1),
-	IN 	`keySearch`	VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN  `keySearch` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	
 	OUT `status_code` TINYINT(1),
 	OUT `message_error` VARCHAR(255)
 )
@@ -11,40 +12,46 @@ BEGIN
 		SET `status_code` = 1;
 		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
 	END;
-	SET `status_code`=0;
-	SET `message_error`='Success';
+
+	SET `status_code`= 0;
+	SET `message_error`= 'Success';
 
 	SELECT 	c.*
 	FROM 	categories  AS c
 	WHERE 	( 
-				(`keySearch` <> '' 	AND c.name LIKE CONCAT('%', `keySearch` , '%')
-									OR c.prefix_name  LIKE CONCAT('%',`keySearch`,'%')
-									OR c.normalize_name  LIKE CONCAT('%',`keySearch`,'%')
-									OR c.description  LIKE CONCAT('%',`keySearch`,'%')
-				) 
-				OR `keySearch` = '' 				
-			) 
-			AND ( 
-					(`_status` > -1 AND c.status = `_status`)
-					OR 	`_status` < 0	
-			
-				)
-			AND ( 
-					(`userId` > -1 AND c.user_id = `userId`)
-					OR 	`userId` < 0	
-			
-				);
-			
+			(`keySearch` <> '' 	AND c.name LIKE CONCAT('%', `keySearch` , '%')
+					OR c.prefix_name  LIKE CONCAT('%',`keySearch`,'%')
+					OR c.normalize_name  LIKE CONCAT('%',`keySearch`,'%')
+					OR c.description  LIKE CONCAT('%',`keySearch`,'%')) 
+			OR `keySearch` = '' 				
+		) 
+		AND ( 
+			(`_status` > -1 AND c.status = `_status`)
+			OR 	`_status` < 0	
+		
+			)
+		AND ( 
+			(`userId` > -1 AND c.user_id = `userId`)
+			OR 	`userId` < 0	
+	
+			);
+		
 	
 END
 
 
 
----------------------
+
+
+
+----------------
+
 
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_categories_v2`(
-	IN `categoryId` INT(11),
+	 IN `userId` INT(11),
+	 IN `categoryId` INT(11),
+	 
 	 OUT `status_code` TINYINT(1),
 	 OUT `message_error` VARCHAR(255)
 )
@@ -61,30 +68,86 @@ SP:BEGIN
 	 SET `status_code` = 0;
 	 SET `message_error` = 'Success';
 	
-
-	SELECT 	c.* ,CONCAT('[',GROUP_CONCAT(JSON_OBJECT(
-												'id', m.id,
-												'name', m.name													
-								)
-					),']') AS listMaterials
-	FROM 	categories c LEFT JOIN materials m ON c.id = m.category_id
-	WHERE 	 c.id =`categoryId`AND m.category_id = c.id 
-	GROUP BY c.id ;
 	
+	DROP TEMPORARY TABLE IF EXISTS tbl_materials;
+	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_materials (
+	   SELECT 	m.id,m.name,m.category_id 
+	   FROM 	materials AS m
+	   WHERE 	m.category_id  = `categoryId` 
+	   	AND m.user_id = `userId`
+	) ;
+	
+	
+	SELECT 	c.*,
+		CONCAT('[',GROUP_CONCAT(JSON_OBJECT(
+			'id', m.id,
+			'name', IFNULL(m.name,'')
+			)
+		),']') AS listMaterials
+	FROM 	categories c 
+		LEFT JOIN tbl_materials m ON c.id = m.category_id
+	WHERE 	c.id = `categoryId`
+	GROUP BY 	c.id ;	
 
 END
 
 
 
 
------------------
+--------------------------
+
+
+
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_filter_categories`(
+	IN  `userId` INT(11),
+	IN  `_keyword` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN  `_sort` TINYINT(1),
+	IN  `_status` TINYINT(1),
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255)
+)
+BEGIN
+	
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`= 0;
+	SET `message_error`= 'Success';
+
+	SELECT 	c.*
+	FROM 	categories  AS c
+	WHERE 	c.user_id  = `userId`
+		AND
+		   ( 
+			(`_keyword` <> '' 	AND c.name LIKE CONCAT('%', `_keyword` , '%')
+					OR c.description  LIKE CONCAT('%',`_keyword`,'%')) 
+			OR `_keyword` = '' 				
+		    ) 
+		AND ( 
+			(`_status` > -1 AND c.status = `_status`)
+			OR 	`_status` < 0	
+		
+		    )
+	ORDER BY 	CASE WHEN `_sort` > 0 THEN c.sort END ASC, c.sort DESC;
+	
+END
+
+
+
+
+------------
 
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_change_status_category`(
 	IN `_id` INT(11),
 	
 	OUT `status_code` TINYINT(1),
-	OUT `message_errozr` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
 )
 SP:BEGIN
 	
@@ -97,16 +160,16 @@ SP:BEGIN
 		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
 	END;
 
-	SELECT 1
-	INTO `isExitCategory`
-	FROM categories c
-	WHERE c.id= `_id`;
+	SELECT 	1
+	INTO 	`isExitCategory`
+	FROM 	categories c
+	WHERE 	c.id= `_id`;
 
 
 	IF `isExitCategory` != 1 THEN
-	SET `status_code` = 2;
-	SET `message_error` = CONCAT('Danh mục có mã: ',`_id`,' không tìm thấy!');
-	LEAVE SP; 
+		SET `status_code` = 2;
+		SET `message_error` = CONCAT('Danh mục có mã: ',`_id`,' không tìm thấy!');
+		LEAVE SP; 
 	END IF;
 
 
@@ -122,14 +185,15 @@ SP:BEGIN
 	END IF;
 
 
-	SELECT c.status 
-	INTO   `statusCurrent`
-	FROM   categories c
-	WHERE  c.id = `_id`;
+	SELECT	c.status 
+	INTO   	`statusCurrent`
+	FROM   	categories c
+	WHERE  	c.id = `_id`;
 
 	SET status_code = 0;
 	SET message_error = 'Success';
 	
+
 	IF `statusCurrent` = 0 THEN
 		UPDATE 	categories c
 		SET 	c.status = 1
@@ -145,13 +209,17 @@ END
 
 
 
----------------------
+
+
+
+
+-------------
 
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_create_category`(
-	IN `_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
 	IN `userId` INT(11),
-	IN `_sort` INT(11),
+	IN `_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `_sort` TINYINT(3),
 	IN `_description` TEXT  CHARACTER SET utf8 COLLATE utf8_general_ci,
 		
 	OUT `status_code` TINYINT(1),
@@ -160,10 +228,9 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_create_ca
 SP:BEGIN
 	
 	DECLARE `isExitCategory` TINYINT DEFAULT 0;
-
-	DECLARE `prefixNameIn` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
-	DECLARE `normalizeNameIn` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
-	DECLARE `codeIn` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `prefixName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `normalizeName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `code` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci;
 	DECLARE `preId` INT(11);
 
 
@@ -175,74 +242,68 @@ SP:BEGIN
 	SET `status_code`=0;
 	SET `message_error`='Success';
 
-	SELECT 1
-	INTO `isExitCategory`
-	FROM categories c 
-	WHERE c.name= `_name`;
+	SELECT 	1
+	INTO 	`isExitCategory`
+	FROM 	categories c 
+	WHERE 	c.user_id = `userId`
+		AND HEX(c.name) = HEX(`_name`);
+		
 
 
 	IF `isExitCategory` > 0 THEN
-	SET `status_code` = 2;
-	SET `message_error` = CONCAT('Tên danh mục: ',`_name`,' đã tồn tại!');
-	LEAVE SP; 
+		SET `status_code` = 2;
+		SET `message_error` = CONCAT('Tên danh mục: ',`_name`,' đã tồn tại!');
+		LEAVE SP; 
 	END IF;
 	
-	SET `prefixNameIn` = prefix_name(`_name`);
-	SET `normalizeNameIn` = normalize_name(`_name`);
-	SET `codeIn` = prefix_name(`_name`);
+	SET `prefixName` = prefix_name(`_name`);
+	SET `normalizeName` = normalize_name(`_name`);
+	SET `code` = prefix_name(`_name`);
 
-	SELECT 	IFNULL(MAX(c.id),0)
-	INTO   `preId`
+	SELECT 	IFNULL(MAX(c.id), 0) + 1 
+	INTO   	`preId`
 	FROM 	categories c;
 
-	SET `codeIn` = CONCAT(prefixNameIn,preId+1);
+	SET `code` = CONCAT(`prefixName`, `preId`);
 
 
-	INSERT INTO categories( code,
-							name,
-							prefix_name,
-							normalize_name,
-							user_id,
-							sort,
-							description
-						  ) 
-					SELECT  `codeIn`,
-							`_name`,
-							`prefixNameIn`,
-							`normalizeNameIn`,
-							`userId`,
-							`_sort`,
-							`_description`;
+	INSERT INTO categories( 
+			code,
+			name,
+			prefix_name,
+			normalize_name,
+			user_id,
+			sort,
+			description
+			) 
+		SELECT      `code`,
+			`_name`,
+			`prefixName`,
+			`normalizeName`,
+			`userId`,
+			`_sort`,
+			`_description`;
 
 
-	SELECT c.* 
-	FROM categories AS c
-	WHERE c.id = LAST_INSERT_ID(); 
+	SELECT 	c.* 
+	FROM 	categories AS c
+	WHERE 	c.id = LAST_INSERT_ID(); 
 END
 
 
 
-------------------------
+-------------------
 
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_update_category`(
-	IN `_id` INT(11),
-	IN `_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-	IN `userId` INT(11),
-	IN `_sort` INT(11),
-	IN `_description` TEXT  CHARACTER SET utf8 COLLATE utf8_general_ci,
-		
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_delete_category_id_by_material`(
+	IN `categoryId` INT(11),
+	
 	OUT `status_code` TINYINT(1),
 	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
 )
 SP:BEGIN
 	
-	DECLARE `isExitCategory` TINYINT DEFAULT 0;
-
-	DECLARE `prefixNameIn` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
-	DECLARE `normalizeNameIn` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
-	DECLARE `codeIn` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci;
-
+	DECLARE `total` INT DEFAULT 0;
 
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
 		SET `status_code` = 1;
@@ -252,42 +313,96 @@ SP:BEGIN
 	SET `status_code`=0;
 	SET `message_error`='Success';
 
-	SELECT COUNT(*)
-	INTO `isExitCategory`
-	FROM categories c
-	WHERE c.name= `_name`;
-
-
-	IF `isExitCategory` > 0 THEN
-	SET `status_code` = 2;
-	SET `message_error` = CONCAT('Tên danh mục: ',`_name`,' đã tồn tại!');
-	LEAVE SP; 
-	END IF;
-	
-	SET `prefixNameIn` = prefix_name(`_name`);
-	SET `normalizeNameIn` = normalize_name(`_name`);
-	SET `codeIn` = prefix_name(`_name`);
-
-
-	SET `codeIn` = CONCAT(`prefixNameIn`,`_id`);
-
-						
-	UPDATE categories c SET 
-			c.code = `codeIn`,
-			c.name = `_name`,
-			c.prefix_name = `prefixNameIn`,
-			c.normalize_name = `normalizeNameIn`,
-			c.user_id = `userId`,
-			c.sort = `_sort`,
-			c.description  = `_description`
-	WHERE c.id = `_id`;  
-
-
-	SELECT c.* 
-	FROM categories AS c
-	WHERE c.id = `_id`;  
+	UPDATE 	materials m
+	SET 	m.category_id  = 0
+	WHERE 	m.category_id  = `categoryId`;
 
 END
+
+
+
+
+
+
+
+
+
+
+--------------------------
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_update_category`(
+	IN `userId` INT(11),
+	IN `_id` INT(11),
+	IN `_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `_sort` TINYINT(3),
+	IN `_description` TEXT  CHARACTER SET utf8 COLLATE utf8_general_ci,
+		
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+SP:BEGIN
+	
+	DECLARE `isExitCategory` TINYINT DEFAULT 0;
+
+	DECLARE `prefixName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `normalizeName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `code` VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`= 0;
+	SET `message_error`= 'Success';
+
+	
+	SELECT 	1
+	INTO   	`isExitCategory`
+	FROM   	categories c
+	WHERE  	c.user_id = `userId`
+		AND c.id <> `_id`
+		AND HEX(c.name) = HEX(`_name`);
+		
+	IF `isExitCategory` > 0 THEN 
+		SET status_code = 2;
+		SET `message_error` = CONCAT('Tên danh mục: ',`_name`,' đã tồn tại!');
+		LEAVE SP;
+	END IF;
+
+	
+	SET `prefixName` = prefix_name(`_name`);
+	SET `normalizeName` = normalize_name(`_name`);
+	SET `code` = prefix_name(`_name`);
+
+
+	SET `code` = CONCAT(`prefixName`,`_id`);
+
+						
+	UPDATE 	categories c 
+	SET 	c.code = `code`,
+		c.name = `_name`,
+		c.prefix_name = `prefixName`,
+		c.normalize_name = `normalizeName`,
+		c.user_id = `userId`,
+		c.sort = `_sort`,
+		c.description  = `_description`
+	WHERE 	c.id = `_id`;  
+
+
+	SELECT 	c.* 
+	FROM 	categories AS c
+	WHERE 	c.id = `_id`;  
+
+END
+
+
+
+
+
+
 
 
 

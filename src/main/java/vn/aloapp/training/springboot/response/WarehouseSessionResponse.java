@@ -1,11 +1,14 @@
 package vn.aloapp.training.springboot.response;
 
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import vn.aloapp.training.common.UtilsResponse;
 import vn.aloapp.training.springboot.entity.WarehouseSession;
 
 
@@ -56,11 +59,11 @@ public class WarehouseSessionResponse {
 	
 	private String description;
 	
-	@JsonProperty("create_at")
-	private Date createAt;
+	@JsonProperty("created_at")
+	private String createdAt;
 	
 	@JsonProperty("list")
-	private ObjectList list;
+	private List<WarehouseSessionDetailResponse> list;
 	
 	public WarehouseSessionResponse() {
 		
@@ -84,8 +87,10 @@ public class WarehouseSessionResponse {
 		this.discountType  = entity.getDiscountType();
 		this.isIncludeVat = entity.getIsIncludeVat();
 		this.description = entity.getDescription();
-		this.createAt = entity.getCreatedAt();
-		this.list =  new ObjectList() ;
+		
+		this.createdAt = entity.getCreatedAtFormatVN(); 
+		
+		this.list = new ArrayList<>();
 	}
 	
 	public List<WarehouseSessionResponse> mapToList(List<WarehouseSession> entities) {
@@ -228,23 +233,22 @@ public class WarehouseSessionResponse {
 		this.description = description;
 	}
 
-	public Date getCreateAt() {
-		return createAt;
+	public String getCreatedAt() {
+		return createdAt;
 	}
 
-	public void setCreateAt(Date createAt) {
-		this.createAt = createAt;
+	public void setCreatedAt(String createdAt) {
+		this.createdAt = createdAt;
 	}
 
-	public ObjectList getList() {
+
+	public List<WarehouseSessionDetailResponse> getList() {
 		return list;
 	}
 
-	public void setList(ObjectList list) {
+	public void setList(List<WarehouseSessionDetailResponse> list) {
 		this.list = list;
 	}
-	
 
-	
 	
 }

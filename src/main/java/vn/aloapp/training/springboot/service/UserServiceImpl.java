@@ -56,6 +56,23 @@ public class UserServiceImpl implements UserService{
 		
 		return userDao.signOut(user);
 	}
+
+	@Override
+	public void findUserByPhoneAndUpdateVerifyCode(String phone, int verifyCode) throws Exception{
+		userDao.findUserByPhoneAndUpdateVerifyCode(phone, verifyCode);
+		
+	}
+
+	@Override
+	public User findUserByPhone(String phone) throws Exception {
+		return userDao.findUserByPhone(phone);
+	}
+
+	@Override
+	public void resetPasswordByUser(String password, int id) throws Exception {
+		userDao.resetPasswordByUser(password, id);
+		
+	}
 	
 
 }

@@ -1,4 +1,4 @@
-package vn.aloapp.training.springboot.entity;
+package vn.aloapp.training.springboot.response;
 
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +9,8 @@ import javax.persistence.Id;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import vn.aloapp.training.springboot.entity.MaterialModel;
 
 
 @Entity

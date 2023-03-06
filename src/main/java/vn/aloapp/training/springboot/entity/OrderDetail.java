@@ -1,5 +1,7 @@
 package vn.aloapp.training.springboot.entity;
 
+import java.math.BigDecimal;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -50,7 +52,7 @@ public class OrderDetail extends BaseEntity{
 	@Column(name = "cost_price")
 	private double costPrice;
 
-	private int quantity;
+	private BigDecimal quantity;
 
 	private int type;
 
@@ -150,11 +152,11 @@ public class OrderDetail extends BaseEntity{
 		this.costPrice = costPrice;
 	}
 
-	public int getQuantity() {
+	public BigDecimal getQuantity() {
 		return quantity;
 	}
 
-	public void setQuantity(int quantity) {
+	public void setQuantity(BigDecimal quantity) {
 		this.quantity = quantity;
 	}
 

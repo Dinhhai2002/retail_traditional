@@ -5,25 +5,17 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+public class CRUDCategoryRequest extends BaseRequest {
 
-import lombok.Getter;
-import lombok.Setter;
+	@NotEmpty(message = "name không được được để trống")
+	private String name;
 
+	@NotNull(message = "description không được phép null")
+	private String description;
 
-public class CRUDCategoryRequest extends BaseRequest{
-
-
-	@NotNull(message = "Tên không được phép null")
-	@NotEmpty(message = "Tên không được được để trống")
-    private String name;
-
-    private String description;
-
-	@Min(value = 0 , message = "nhỏ nhất 0.")
-	@Max(value = 100, message = "lớn nhất 100.")
-    private int sort;
-
+	@Min(value = 0, message = "sort nhỏ nhất 0.")
+	@Max(value = 100, message = "sort lớn nhất 100.")
+	private int sort;
 
 	public String getName() {
 		return name;
@@ -48,7 +40,5 @@ public class CRUDCategoryRequest extends BaseRequest{
 	public void setSort(int sort) {
 		this.sort = sort;
 	}
-	
-	
-	
+
 }

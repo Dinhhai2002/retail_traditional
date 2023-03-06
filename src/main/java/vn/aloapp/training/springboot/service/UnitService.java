@@ -9,18 +9,20 @@ import vn.aloapp.training.springboot.entity.UnitModel;
 
 public interface UnitService {
 
-	Unit spUCreateUnit(int userId, String name, String description) throws Exception;
+	Unit spUCreateUnit(int userId, String name, String description) throws TechresHttpException;
 
-	Unit findOne(Integer id) throws Exception;
+	Unit findByUserIdAndUnitId(int userId, int id) throws TechresHttpException;
 
-	Unit spUUpdateUnit(Unit unit) throws Exception;
+	Unit spUUpdateUnit(Unit unit) throws TechresHttpException;
 
-	void spUChangeStatusUnit(int status, Integer id) throws Exception;
+	void spUChangeStatusUnit(int status, Integer id) throws TechresHttpException;
 
-	List<Unit> spListUnit(int status) throws TechresHttpException;
+	List<UnitModel> spGUnitByMaterial(int id) throws TechresHttpException;
 
-	List<UnitModel> spGUnitByMaterial(int id) throws Exception;
+	void update(Unit unit) throws TechresHttpException;
 
-	void update(Unit unit) throws Exception;
+	List<Unit> spGFilterUnits(int id, String keyword, int status) throws TechresHttpException;
+
+	Unit findByUserIdAndUnitIdAndStatus(int userId, int unitId, int status) throws TechresHttpException;
 
 }

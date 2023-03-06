@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.persistence.ParameterMode;
 import javax.persistence.StoredProcedureQuery;
+import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
@@ -11,18 +12,16 @@ import org.hibernate.criterion.Restrictions;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import vn.aloapp.training.common.enums.StoreProcedureStatusCodeEnum;
 import vn.aloapp.training.common.exception.TechresHttpException;
+import vn.aloapp.training.springboot.entity.Material;
 import vn.aloapp.training.springboot.entity.Order;
-import vn.aloapp.training.springboot.request.CRUDOrderRequest;
 
 @Repository("orderDao")
 public class OrderDaoImpl extends AbstractDao<Long, Order> implements OrderDao{
 
 	@Override
-	public Order spUCreateOrder(int id, double vat, double discountPercent, double discountAmount, String description,
+	public Order spUCreateOrder(int userId, double vat, double discountPercent, double discountAmount, String description,
 			String orderDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_create_order", Order.class)
@@ -37,7 +36,7 @@ public class OrderDaoImpl extends AbstractDao<Long, Order> implements OrderDao{
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 
-		query.setParameter("userId", id);
+		query.setParameter("userId", userId);
 		query.setParameter("_vat", vat);
 		query.setParameter("discountPercent", discountPercent);
 		query.setParameter("discountAmount", discountAmount);
@@ -46,7 +45,6 @@ public class OrderDaoImpl extends AbstractDao<Long, Order> implements OrderDao{
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
 		String messageError = query.getOutputParameterValue("message_error").toString();
-		
 		
 		switch (StoreProcedureStatusCodeEnum.valueOf(statusCode)) {
 		case SUCCESS:
@@ -59,18 +57,26 @@ public class OrderDaoImpl extends AbstractDao<Long, Order> implements OrderDao{
 	}
 
 	@Override
-	public Order findOne(long id) throws Exception {
-		return (Order) this.getSession().createCriteria(Order.class).add(Restrictions.eq("id", id)).uniqueResult();
+	public Order findByOrderByUserId(long id, int userId) throws Exception {
+		CriteriaBuilder builder = this.getBuilder();
+		CriteriaQuery<Order> query = builder.createQuery(Order.class);
+		Root<Order> root = query.from(Order.class);
+		query.where(builder.and(builder.equal(root.get("id"), id), 
+					builder.equal(root.get("userId"), userId)));
+	
+		return this.getSession().createQuery(query).uniqueResult();
 	}
 
 	@Override
-	public List<Order> findAll() throws Exception {
+	public List<Order> findOrdersByUserId(int userId) throws Exception {
 		
-		CriteriaQuery<Order> criteria = this.getBuilder().createQuery(Order.class);
-		Root<Order> root = criteria.from(Order.class);
+		CriteriaBuilder builder = this.getBuilder();
+		CriteriaQuery<Order> query = builder.createQuery(Order.class);
+		Root<Order> root = query.from(Order.class);
+		query.where(builder.equal(root.get("userId"), userId));
 
-		criteria.select(root);
-		return this.getSession().createQuery(criteria).getResultList();
+		
+		return this.getSession().createQuery(query).getResultList();
 
 	}
 

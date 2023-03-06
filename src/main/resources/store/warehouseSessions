@@ -1,3 +1,350 @@
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_warehouse_session_detail_by_warehouse_session_id`(
+	IN `warehouseSessionId` BIGINT,
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+SP:BEGIN
+	
+	DECLARE `isExitwarehouseSessionId` TINYINT DEFAULT 0;
+	DECLARE `isUse` TINYINT(1) DEFAULT 0;
+	DECLARE `statusCurrent` TINYINT(1) DEFAULT 0;
+
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`= 0;
+	SET `message_error`= 'Success';
+
+	SELECT 	COUNT(*)
+	INTO 	`isExitwarehouseSessionId`
+	FROM 	warehouse_sessions ws
+	WHERE 	ws.id = `warehouseSessionId`;
+
+
+	IF `isExitwarehouseSessionId` != 1 THEN
+		SET `status_code` = 2;
+		SET `message_error` = CONCAT('Danh mục có mã: ',`warehouseSessionId`,' không tìm thấy!');
+		LEAVE SP; 
+	END IF;
+
+
+	SELECT 	wsd.*
+	FROM  	warehouse_session_details wsd
+	WHERE 	wsd.warehouse_session_id  = `warehouseSessionId`;
+
+END
+
+
+
+
+
+
+
+
+--------------------
+
+
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_cancel_warehouse_session`(
+	IN `userId` INT(11),
+	IN `discountPercent` DECIMAL(20,2),
+	IN `_vat` DECIMAL(20,2),
+	IN `discountAmount` DECIMAL(20,2),
+	IN `_description` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `warehouseSessionDetail` TEXT,
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255)
+)
+SP:BEGIN
+	DECLARE `index` TINYINT(3) DEFAULT 0;
+	DECLARE `itemCount` TINYINT(3) DEFAULT 0;
+	DECLARE `_amount` DECIMAL(20,2) DEFAULT 0;
+	DECLARE `isExitMaterial` TINYINT(1)  DEFAULT 0;
+	DECLARE `warehouseSessionId` INT(11);
+	DECLARE `_code` VARCHAR(255);
+	DECLARE `countType` INT(11);
+-- warehouseSessionDetail
+	DECLARE `categoryId` INT(11) ;
+	DECLARE `categoryName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci ;
+	DECLARE `materialUnitId` INT(11);
+    	DECLARE `materialUnitName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+    	DECLARE `materialName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+   	DECLARE `materialId` INT(11);
+   	DECLARE `_price` DECIMAL(20,2);
+   	DECLARE `_quantity` DECIMAL(10,2);
+   	DECLARE `quantityMaterial` DECIMAL(10,2);
+   	DECLARE `newQuantity` DECIMAL(10,2);
+   	DECLARE `isDiscount` TINYINT(1);
+   
+   
+   
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`= 0;
+	SET `message_error`= 'Success';
+
+	IF (`discountPercent` > 0 AND `discountAmount` > 0) THEN
+		SET `status_code`= 2;
+		SET `message_error`= 'Chỉ được phép nhập giảm giá phần trăm hoặc giảm giá tiền mặt.';
+		LEAVE SP;
+	END IF;
+
+	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
+	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_warehouse_session_detail (
+														
+	    `category_id` INT(11),
+	    `category_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	    `material_unit_id` INT(11),
+	    `material_unit_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	    `material_id` INT(11),
+	    `material_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	    `price` DECIMAL(20,2),
+	    `quantity` DECIMAL(20,2)
+	);
+
+	 SET `index` = 0;
+	 SET `itemCount` = JSON_LENGTH(`warehouseSessionDetail`);
+	
+	 WHILE `index` < `itemCount` DO
+	
+		SET `materialId`= JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].material_id'));
+		SET `_quantity`= JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].quantity'));
+		
+		IF (SELECT 	COUNT(*)
+			FROM 	materials m
+			WHERE 	m.id = `materialId` 
+				AND m.status = 1
+				AND m.user_id = `userId`
+				) < 1
+		THEN
+			SET `status_code`= 2;
+			SET `message_error`= 'nguyên liệu không tồn tại hoặc đã tắt';
+			LEAVE SP;
+		END IF;	
+
+		SELECT 	m.category_id,
+			c.name,
+			m.unit_id ,
+			u.name,
+			m.name,
+			m.cost_price 
+		INTO 	`categoryId`,
+			`categoryName`,
+			`materialUnitId`,
+			`materialUnitName`,
+			`materialName`,
+			`_price`
+		FROM 	materials m 
+			LEFT JOIN categories c ON m.category_id = c.id 
+			LEFT JOIN units u ON u.id = m.unit_id 
+		WHERE 	m.id = `materialId` 
+			AND m.user_id = `userId`;
+	
+		SET `_amount`=`_amount`+(`_price`*`_quantity`);
+	
+-- 		tạo bảng tạm để tính tồn kho
+		DROP TEMPORARY TABLE IF EXISTS tbl_test;
+		CREATE TEMPORARY TABLE IF NOT EXISTS tbl_test (
+					
+		SELECT 	wsd.material_id ,
+			(
+			SUM(CASE WHEN wsd.warehouse_session_type = 0  
+			 				THEN quantity 
+		    					ELSE 0
+	  						END)
+			-
+				SUM(CASE WHEN warehouse_session_type = 1 
+			 				THEN quantity 
+		    					ELSE 0
+	  						END)
+			-
+				SUM(CASE WHEN warehouse_session_type = 2 
+			 				THEN quantity 
+		    					ELSE 0
+	  						END)
+			+
+				SUM(CASE WHEN warehouse_session_type = 3  
+			 				THEN quantity 
+		    					ELSE 0
+	  						END)
+  			)*(100-m.wastage_rate )/100 AS `system_last_quantity`
+				
+		FROM 	warehouse_session_details AS wsd 
+			LEFT JOIN materials AS m ON wsd.material_id =m.id
+		WHERE 	wsd.material_id = `materialId`
+			AND wsd.user_id = `userId`
+		GROUP BY 	m.name, wsd.material_id 
+			);
+			
+		IF (SELECT 	count(*) FROM tbl_test AS t) = 0 
+		THEN 
+			SET `status_code`= 2;
+			SET `message_error`= 'nguyen lieu chua nhap kho nen khong the ban ';
+			LEAVE SP;	
+		END IF;	
+		
+		SELECT 	t.system_last_quantity
+		INTO 	`newQuantity`
+		FROM 	tbl_test AS t;
+		
+		IF `newQuantity`< `_quantity` THEN
+			SET `status_code`= 2;
+			SET `message_error`= CONCAT('số lượng xuất ra của nguyên liệu ',`materialName`,' vượt quá số lượng tồn kho');
+			LEAVE SP;
+		END IF;
+	
+		
+		INSERT INTO tbl_warehouse_session_detail (
+					      category_id,
+					      category_name, 
+					      material_unit_id,
+					      material_unit_name,
+				                  material_id,
+					      material_name,
+					      price,
+					      quantity
+					)
+		    							
+	                   		SELECT 	      `categoryId`,
+					      `categoryName`,
+					      `materialUnitId`,
+					      `materialUnitName`,
+					      `materialId`,
+					      `materialName`,
+					      `_price`,
+					      `_quantity`
+		 WHERE 	`newQuantity`>`_quantity`
+		 GROUP BY 	`materialId`;				
+	   			
+
+	   	 SET `index` = `index` + 1;
+	END WHILE;
+	
+-- 	
+-- 	SELECT 	COUNT(wsd.material_id)
+-- 	FROM 	tbl_warehouse_session_detail AS wsd;
+	
+	SELECT 	COUNT(*)
+	INTO 	`countType`
+	FROM 	warehouse_sessions AS ws
+	WHERE 	ws.`type`= 2 AND ws.user_id = `userId`;
+ 
+	SET `countType`= `countType`+1;
+	SET `_code`= CONCAT('PHK','00000',`countType`) ;
+	
+	IF (`discountPercent` > 0) THEN
+		SET `isDiscount` = 1;
+	END IF;
+	
+	IF (`discountAmount` > 0)	
+	THEN
+		SET `isDiscount` = 2;
+	END IF;
+	
+	
+	INSERT INTO warehouse_sessions  (
+				user_id,
+				supplier_id,
+				code,
+				amount,
+				discount_percent,
+				vat,
+				vat_amount,
+				discount_amount,
+				total_amount,
+				type,
+				status,
+				addition_fee_id,
+				receipt_number_no,
+				discount_type,
+				is_include_vat,
+				description
+				)
+		SELECT 		`userId`,
+				0,
+				`_code`,
+				`_amount`,
+				`discountPercent`,
+				`_vat`,
+				(`_amount`*(`_vat`/100)),
+				`discountAmount`,
+				CASE  WHEN `isDiscount` = 2 
+					THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
+				      WHEN `isDiscount` = 1
+					THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
+						ELSE (`_amount`+(`_amount`*(`_vat`/100))) END,
+				2,
+				1,
+				0,
+				`countType`,
+				1,
+				CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
+				`_description`;
+							
+	SET `warehouseSessionId`= LAST_INSERT_ID();
+	
+					
+	INSERT INTO warehouse_session_details (
+				   user_id,
+				   warehouse_session_id,
+				   category_id,
+				   category_name,
+				   material_unit_id,
+				   material_unit_name,
+				   material_id,
+				   material_name,
+				   price,
+				   quantity,
+				   total_amount,
+				   warehouse_session_type,
+				   warehouse_session_status
+				)
+                     SELECT 		  `userId`,
+				  `warehouseSessionId` AS warehouse_session_id,
+				  tmpw.category_id,
+				  tmpw.category_name,
+				  IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
+				  IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
+				  tmpw.material_id,
+				  tmpw.material_name,
+				  tmpw.price,
+				  tmpw.quantity,
+				  (tmpw.price*tmpw.quantity) ,
+				  2 AS warehouse_session_type,
+				  1 AS warehouse_session_status
+	FROM 	tbl_warehouse_session_detail AS  tmpw;
+	
+	
+	SELECT 	w.*
+	FROM 	warehouse_sessions  w
+ 	WHERE 	w.id =`warehouseSessionId`; 
+	
+	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
+
+END
+
+
+
+
+
+
+
+
+
+
+
+-----------------
+
+
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_create_warehouse_session`(
 	IN `userId` INT(11),
 	IN `discountPercent` DECIMAL(20,2),
@@ -20,12 +367,12 @@ SP:BEGIN
 	DECLARE `categoryId` INT(11) ;
 	DECLARE `categoryName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci ;
 	DECLARE `materialUnitId` INT(11);
-    DECLARE `materialUnitName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
-    DECLARE `materialName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+   	DECLARE `materialUnitName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+    	DECLARE `materialName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
    	DECLARE `materialId` INT(11);
    	DECLARE `_price` DECIMAL(20,2);
    	DECLARE `_quantity` DECIMAL(10,2);
-   	DECLARE `is_discount` TINYINT(1);
+   	DECLARE `isDiscount` TINYINT(1);
    
    
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
@@ -39,23 +386,23 @@ SP:BEGIN
 	
 
 	IF (`discountPercent` > 0 AND `discountAmount` > 0) THEN
-			SET `status_code`= 2;
-			SET `message_error`= 'Chỉ được phép nhập giảm giá phần trăm hoặc giảm giá tiền mặt.';
-			LEAVE SP;
+		SET `status_code`= 2;
+		SET `message_error`= 'Chỉ được phép nhập giảm giá phần trăm hoặc giảm giá tiền mặt.';
+		LEAVE SP;
 	END IF;
 
 	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
-	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_warehouse_session_detail (
-														
-													    `category_id` INT(11),
-													    `category_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_unit_id` INT(11),
-													    `material_unit_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_id` INT(11),
-													    `material_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `price` DECIMAL(20,2),
-													    `quantity` DECIMAL(20,2)
-														);
+	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_warehouse_session_detail (													
+	    `category_id` INT(11),
+	    `category_name` VARCHAR(255),
+	    `material_unit_id` INT(11),
+	    `material_unit_name` VARCHAR(255),
+	    `material_id` INT(11),
+	    `material_name` VARCHAR(255),
+	    `price` DECIMAL(20,2),
+	    `quantity` DECIMAL(20,2)
+	) CHARACTER SET utf8 COLLATE utf8_general_ci;
+
 	 SET `index` = 0;
 	 SET `itemCount` = JSON_LENGTH(`warehouseSessionDetail`);
 	
@@ -64,55 +411,62 @@ SP:BEGIN
 		SET `materialId`=JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].material_id'));
 		SET `_quantity`=JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].quantity'));
 		
-		
+		IF (SELECT 	COUNT(*)
+			FROM 	materials m
+			WHERE 	m.id = `materialId` 
+				AND m.status = 1
+				AND m.user_id = `userId`
+				) < 1 
+		THEN
+			SET `status_code`= 2;
+			SET `message_error`= 'nguyên liệu không tồn tại hoặc đã tắt.';
+			LEAVE SP;
+		END IF;	
+		SELECT 	m.category_id,
+			c.name ,
+			m.unit_id ,
+			u.name,
+			m.name,
+			m.cost_price 
+		INTO 	`categoryId`,
+			`categoryName`,
+			`materialUnitId`,
+			`materialUnitName`,
+			`materialName`,
+			`_price`
+		FROM 	materials m 
+			LEFT JOIN 	categories c ON m.category_id =c.id 
+			LEFT JOIN 	units u ON u.id =m.unit_id 
+		WHERE 	m.id=`materialId`
+			AND m.user_id = `userId`;
 	
-		
-
-		SELECT 		m.category_id,
-					c.name ,
-					m.unit_id ,
-					u.name,
-					m.name,
-					m.cost_price 
-		INTO 		`categoryId`,
-					`categoryName`,
-					`materialUnitId`,
-					`materialUnitName`,
-					`materialName`,
-					`_price`
-		FROM 		materials m 
-					LEFT JOIN 	categories c ON m.category_id =c.id 
-					LEFT JOIN 	units u ON u.id =m.unit_id 
-		WHERE 		m.id=`materialId`;
 		SET `_amount`=`_amount`+(`_price`*`_quantity`);
 	
-	    INSERT INTO tbl_warehouse_session_detail (
-				    							category_id,
-				    							category_name, 
-				    							material_unit_id,
-				    							material_unit_name,
-				    							material_id,
-				    							material_name,
-				    							price,
-				    							quantity
-				    							)
+	    	INSERT INTO tbl_warehouse_session_detail (
+						category_id,
+						category_name, 
+						material_unit_id,
+						material_unit_name,
+						material_id,
+						material_name,
+						price,
+						quantity
+						)
 				    							
-				    SELECT 						`categoryId`,
-				   								`categoryName`,
-				   								`materialUnitId`,
-				   								`materialUnitName`,
-				   								`materialId`,
-				   								`materialName`,
-				   								`_price`,
-				   								`_quantity`
-				   								
-				   	GROUP BY  `materialId`;				
+			   		 SELECT 	`categoryId`,
+						`categoryName`,
+						`materialUnitId`,
+						`materialUnitName`,
+						`materialId`,
+						`materialName`,
+						`_price`,
+						`_quantity`
+		GROUP BY  	`materialId`;				
 				   			
-		
-		
 	
 	   	SET `index` = `index` + 1;
 	END WHILE;
+
 	
 	SELECT 	COUNT(*)
 	INTO 	`countType`
@@ -125,100 +479,106 @@ SP:BEGIN
 
 	
 -- xử lí discount tính tổng tiền
-	IF (`discountPercent` > 0)	THEN
-		SET `is_discount` = 1;
+	IF (`discountPercent` > 0) THEN
+		SET `isDiscount` = 1;
 	END IF;
 	
 	IF (`discountAmount` > 0)	
 	THEN
-		SET `is_discount` = 2;
+		SET `isDiscount` = 2;
 	END IF;
 	
 	INSERT INTO warehouse_sessions  (
-									user_id,
-									supplier_id,
-									code,
-									amount,
-									discount_percent,
-									vat,
-									vat_amount,
-									discount_amount,
-									total_amount,
-									type,
-									status,
-									addition_fee_id,
-									receipt_number_no,
-									discount_type,
-									is_include_vat,
-									description
-									)
+				user_id,
+				supplier_id,
+				code,
+				amount,
+				discount_percent,
+				vat,
+				vat_amount,
+				discount_amount,
+				total_amount,
+				type,
+				status,
+				addition_fee_id,
+				receipt_number_no,
+				discount_type,
+				is_include_vat,
+				description
+				)
 									
-			SELECT 					`userId`,
-									0,
-									`_code`,
-									`_amount`,
-									`discountPercent`,
-									`_vat`,
-									(`_amount`*(`_vat`/100)),
-									`discountAmount`,
-									(CASE 	WHEN `is_discount` = 2 
-												THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
-											WHEN `is_discount` = 1
-												THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
-											ELSE (`_amount`+(`_amount`*(`_vat`/100))) END) AS total_amount,
-									0,
-									1,
-									0,
-									`countType`,
-									1,
-									CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
-									`_description`;
+		SELECT 		`userId`,
+				0,
+				`_code`,
+				`_amount`,
+				`discountPercent`,
+				`_vat`,
+				(`_amount`*(`_vat`/100)),
+				`discountAmount`,
+				(CASE 	WHEN `isDiscount` = 2 
+						THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
+					WHEN `isDiscount` = 1
+						THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
+					ELSE (`_amount`+(`_amount`*(`_vat`/100))) END) AS total_amount,
+				0,
+				1,
+				0,
+				`countType`,
+				1,
+				CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
+				`_description`;
 							
 	SET `warehouseSessionId`=LAST_INSERT_ID();
 	
 					
 	INSERT INTO warehouse_session_details (
-											user_id,
-											warehouse_session_id,
-											category_id,
-											category_name,
-											material_unit_id,
-											material_unit_name,
-											material_id,
-											material_name,
-											price,
-											quantity,
-											total_amount,
-											warehouse_session_type,
-											warehouse_session_status
-											
-											)
-			SELECT 							`userId`,
-											warehouseSessionId AS warehouse_session_id,
-											tmpw.category_id,
-											tmpw.category_name,
-											IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
-											IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
-											tmpw.material_id,
-											tmpw.material_name,
-											tmpw.price,
-											tmpw.quantity,
-											(tmpw.price*tmpw.quantity) ,
-											0,
-											1 AS warehouse_session_status
-											
-	FROM 		tbl_warehouse_session_detail AS  tmpw;
+				    user_id,
+				    warehouse_session_id,
+				    category_id,
+				    category_name,
+				    material_unit_id,
+				    material_unit_name,
+				    material_id,
+				    material_name,
+				    price,
+				    quantity,
+				    total_amount,
+				    warehouse_session_type,
+				    warehouse_session_status
+				)
+			SELECT 	   `userId`,
+				   warehouseSessionId AS warehouse_session_id,
+				   tmpw.category_id,
+				   tmpw.category_name,
+				   IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
+				   IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
+				   tmpw.material_id,
+				   tmpw.material_name,
+				   tmpw.price,
+				   tmpw.quantity,
+				   (tmpw.price*tmpw.quantity) ,
+				   0,
+				   1 AS warehouse_session_status
+	FROM 	tbl_warehouse_session_detail AS  tmpw;
 
 
 	SELECT 	w.*
 	FROM 	warehouse_sessions  w
- 	WHERE 	w.id =`warehouseSessionId`; 
+ 	WHERE 	w.id = `warehouseSessionId`; 
 	
 	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
 
 END
 
----------------------
+
+
+
+
+
+----------------------
+
+
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_export_warehouse_session`(
 	IN `userId` INT(11),
 	IN `discountPercent` DECIMAL(20,2),
@@ -241,13 +601,13 @@ SP:BEGIN
 	DECLARE `categoryId` INT(11) ;
 	DECLARE `categoryName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci ;
 	DECLARE `materialUnitId` INT(11);
-    DECLARE `materialUnitName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
-    DECLARE `materialName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `materialUnitName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
+	DECLARE `materialName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
    	DECLARE `materialId` INT(11);
    	DECLARE `_price` DECIMAL(20,2);
    	DECLARE `_quantity` DECIMAL(10,2);
    	DECLARE `newQuantity` DECIMAL(10,2);
-   	DECLARE `is_discount` TINYINT(1);
+   	DECLARE `isDiscount` TINYINT(1);
    
    
    
@@ -260,118 +620,140 @@ SP:BEGIN
 	SET `message_error`='Success';
 
 	IF (`discountPercent` > 0 AND `discountAmount` > 0) THEN
-			SET `status_code`= 2;
-			SET `message_error`= 'Chỉ được phép nhập giảm giá phần trăm hoặc giảm giá tiền mặt!';
-			LEAVE SP;
+		SET `status_code`= 2;
+		SET `message_error`= 'Chỉ được phép nhập giảm giá phần trăm hoặc giảm giá tiền mặt!';
+		LEAVE SP;
 	END IF;
 
 	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
 	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_warehouse_session_detail (
-														
-													    `category_id` INT(11),
-													    `category_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_unit_id` INT(11),
-													    `material_unit_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_id` INT(11),
-													    `material_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `price` DECIMAL(20,2),
-													    `quantity` DECIMAL(20,2)
-														);
+	    `category_id` INT(11),
+	    `category_name` VARCHAR(255),
+	    `material_unit_id` INT(11),
+	    `material_unit_name` VARCHAR(255),
+	    `material_id` INT(11),
+	    `material_name` VARCHAR(255),
+	    `price` DECIMAL(20,2),
+	    `quantity` DECIMAL(20,2)
+	)  CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+
 	 SET `index` = 0;
 	 SET `itemCount` = JSON_LENGTH(`warehouseSessionDetail`);
 	 WHILE `index` < `itemCount` DO
+		
+		SET `materialId`= JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].material_id'));
+		SET `_quantity`= JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].quantity'));
+		
+		IF (SELECT 	COUNT(*)
+			FROM 	materials m
+			WHERE 	m.id = `materialId` 
+				AND m.status = 1
+				AND m.user_id = `userId`
+				) < 1 
+		THEN
+			SET `status_code`= 2;
+			SET `message_error`= 'nguyên liệu không tồn tại hoặc đã tắt.';
+			LEAVE SP;
+		END IF;	
 	
-		
-		SET `materialId`=JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].material_id'));
-		SET `_quantity`=JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].quantity'));
-		
-		SELECT 		m.category_id,
-					c.name ,
-					m.unit_id ,
-					u.name,
-					m.name,
-					m.cost_price 
-		INTO 		`categoryId`,
-					`categoryName`,
-					`materialUnitId`,
-					`materialUnitName`,
-					`materialName`,
-					`_price`
-		FROM 		materials m 
-					LEFT JOIN 	categories c ON m.category_id =c.id 
-					LEFT JOIN 	units u ON u.id =m.unit_id 
-		WHERE 		m.id=`materialId`;
+		SELECT 	m.category_id,
+			c.name ,
+			m.unit_id ,
+			u.name,
+			m.name,
+			m.cost_price 
+		INTO 	`categoryId`,
+			`categoryName`,
+			`materialUnitId`,
+			`materialUnitName`,
+			`materialName`,
+			`_price`
+		FROM 	materials m 
+			LEFT JOIN categories c ON m.category_id =c.id 
+			LEFT JOIN units u ON u.id =m.unit_id 
+		WHERE 	m.id = `materialId`
+			AND m.user_id = `userId`;
 	
 		SET `_amount`=`_amount`+(`_price`*`_quantity`);
 		
 		
-	DROP TEMPORARY TABLE IF EXISTS tbl_test;
-	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_test (
-				
-	SELECT wsd.material_id ,
-			(
+		DROP TEMPORARY TABLE IF EXISTS tbl_test;
+		CREATE TEMPORARY TABLE IF NOT EXISTS tbl_test (
+					
+		SELECT 	wsd.material_id ,
+		     	(
 			SUM(CASE WHEN wsd.warehouse_session_type = 0  
-				 					THEN quantity 
-			    					ELSE 0
-		  						END)
-	  				-
-		 				SUM(CASE WHEN warehouse_session_type = 1 
-				 					THEN quantity 
-			    					ELSE 0
-		  						END)
-	  				-
-						SUM(CASE WHEN warehouse_session_type = 2 
-				 					THEN quantity 
-			    					ELSE 0
-		  						END)
-					+
-						SUM(CASE WHEN warehouse_session_type = 3  
-				 					THEN quantity 
-			    					ELSE 0
-		  						END)
-		  			)*(100-m.wastage_rate )/100 AS `system_last_quantity`
-			
-	
-	FROM 	warehouse_session_details AS wsd 
+			 				THEN quantity 
+		    					ELSE 0
+							END)
+			-
+			SUM(CASE WHEN warehouse_session_type = 1 
+			 				THEN quantity 
+		    					ELSE 0
+							END)
+			-
+			SUM(CASE WHEN warehouse_session_type = 2 
+			 				THEN quantity 
+		    					ELSE 0
+							END)
+			+
+			SUM(CASE WHEN warehouse_session_type = 3  
+			 				THEN quantity 
+		    					ELSE 0
+							END)
+			)*(100-m.wastage_rate )/100 AS `system_last_quantity`
+				
+		FROM 	warehouse_session_details AS wsd 
 			LEFT JOIN materials AS m ON wsd.material_id =m.id
-	WHERE 	wsd.material_id =`materialId`
-			);
+		WHERE 	wsd.material_id = `materialId`
+			AND wsd.user_id = `userId`
+		GROUP BY 	m.name, wsd.material_id 
+		);
+	
+	
+		IF (SELECT 	count(*) FROM tbl_test AS t) = 0 
+		THEN 
+			SET `status_code`= 2;
+			SET `message_error`= 'nguyen lieu chua nhap kho nen khong the ban ';
+			LEAVE SP;	
+		END IF;
 	
 		
-	SELECT 	t.system_last_quantity
-	INTO 	`newQuantity`
-	FROM 	tbl_test AS t;	
+		SELECT 	t.system_last_quantity
+		INTO 	`newQuantity`
+		FROM 	tbl_test AS t;	
 	
-	IF `newQuantity`< `_quantity` THEN
+		IF `newQuantity`< `_quantity` THEN
 			SET `status_code`= 2;
 			SET `message_error`= CONCAT('số lượng xuất ra của nguyên liệu ',`materialName`,' vượt quá số lượng tồn kho');
 			LEAVE SP;
-	END IF;
+		END IF;
 	
-	    INSERT INTO tbl_warehouse_session_detail (
-				    							category_id,
-				    							category_name, 
-				    							material_unit_id,
-				    							material_unit_name,
-				    							material_id,
-				    							material_name,
-				    							price,
-				    							quantity
-				    							)
+		INSERT INTO tbl_warehouse_session_detail (
+					category_id,
+					category_name, 
+					material_unit_id,
+					material_unit_name,
+					material_id,
+					material_name,
+					price,
+					quantity
+					)
 				    							
-				    SELECT 						`categoryId`,
-				   								`categoryName`,
-				   								`materialUnitId`,
-				   								`materialUnitName`,
-				   								`materialId`,
-				   								`materialName`,
-				   								`_price`,
-				   								`_quantity`
-				   	WHERE 						`newQuantity`>`_quantity`
-				   	GROUP BY					`materialId`;				
+		 SELECT 			`categoryId`,
+					`categoryName`,
+					`materialUnitId`,
+					`materialUnitName`,
+					`materialId`,
+					`materialName`,
+					`_price`,
+					`_quantity`
+	   	WHERE 	`newQuantity`>`_quantity`
+	   	GROUP BY	`materialId`;				
 				   			
 		
-	   	SET `index` = `index` + 1;
+	   SET `index` = `index` + 1;
 	END WHILE;
 	
 	SELECT 	COUNT(*)
@@ -382,87 +764,91 @@ SP:BEGIN
 	SET `countType` = `countType`+1;
 	SET `_code`= CONCAT('PXK','00000',`countType`) ;
 
-	IF (`discountPercent` > 0)	THEN
-		SET `is_discount` = 1;
+
+	IF (`discountPercent` > 0) THEN
+	
+		SET `isDiscount` = 1;
+	
 	END IF;
 	
-	IF (`discountAmount` > 0)	
-	THEN
-		SET `is_discount` = 2;
+	IF (`discountAmount` > 0) THEN
+	
+		SET `isDiscount` = 2;
+	
 	END IF;
 	
+
 	INSERT INTO warehouse_sessions  (
-									user_id,
-									supplier_id,
-									code,
-									amount,
-									discount_percent,
-									vat,
-									vat_amount,
-									discount_amount,
-									total_amount,
-									type,
-									status,
-									addition_fee_id,
-									receipt_number_no,
-									discount_type,
-									is_include_vat,
-									description
-									)
-			SELECT 					`userId`,
-									0,
-									`_code`,
-									`_amount`,
-									`discountPercent`,
-									`_vat`,
-									(`_amount`*(`_vat`/100)),
-									`discountAmount`,
-									CASE 	WHEN `is_discount` = 2 
-											THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
-											WHEN `is_discount` = 1
-											THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
-											ELSE (`_amount`+(`_amount`*(`_vat`/100))) END,
-									1,
-									1,
-									0,
-									`countType`,
-									1,
-									CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
-									`_description`;
+				user_id,
+				supplier_id,
+				code,
+				amount,
+				discount_percent,
+				vat,
+				vat_amount,
+				discount_amount,
+				total_amount,
+				type,
+				status,
+				addition_fee_id,
+				receipt_number_no,
+				discount_type,
+				is_include_vat,
+				description
+				)
+		SELECT 		`userId`,
+				0,
+				`_code`,
+				`_amount`,
+				`discountPercent`,
+				`_vat`,
+				(`_amount`*(`_vat`/100)),
+				`discountAmount`,
+				CASE 	WHEN `isDiscount` = 2 
+						THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
+					WHEN `isDiscount` = 1
+						THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
+					ELSE (`_amount`+(`_amount`*(`_vat`/100))) END,
+				1,
+				1,
+				0,
+				`countType`,
+				1,
+				CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
+				`_description`;
 							
-	SET `warehouseSessionId`=LAST_INSERT_ID();
-	
- 
+	SET `warehouseSessionId`= LAST_INSERT_ID();
+
 					
 	INSERT INTO warehouse_session_details (
-											user_id,
-											warehouse_session_id,
-											category_id,
-											category_name,
-											material_unit_id,
-											material_unit_name,
-											material_id,
-											material_name,
-											price,
-											quantity,
-											total_amount,
-											warehouse_session_type,
-											warehouse_session_status
-											
-											)
-			SELECT 							`userId`,
-											`warehouseSessionId` AS warehouse_session_id,
-											tmpw.category_id,
-											tmpw.category_name,
-											IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
-											IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
-											tmpw.material_id,
-											tmpw.material_name,
-											tmpw.price,
-											tmpw.quantity,
-											(tmpw.price*tmpw.quantity) ,
-											1 AS warehouse_session_type,
-											1 AS warehouse_session_status
+				user_id,
+				warehouse_session_id,
+				category_id,
+				category_name,
+				material_unit_id,
+				material_unit_name,
+				material_id,
+				material_name,
+				price,
+				quantity,
+				total_amount,
+				warehouse_session_type,
+				warehouse_session_status
+				
+				)
+		SELECT 		`userId`,
+				`warehouseSessionId` AS warehouse_session_id,
+				tmpw.category_id,
+				tmpw.category_name,
+				IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
+				IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
+				tmpw.material_id,
+				tmpw.material_name,
+				tmpw.price,
+				tmpw.quantity,
+				(tmpw.price*tmpw.quantity) ,
+				1 AS warehouse_session_type,
+				1 AS warehouse_session_status
 	FROM 	tbl_warehouse_session_detail AS  tmpw;
 
 	SELECT 	w.*
@@ -474,15 +860,26 @@ SP:BEGIN
 
 END
 
-----------------
+
+
+
+
+
+
+
+--------------
+
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_export_warehouse_session_from_order`(
-	IN 	`orderId` INT(11),
+
+	IN `orderId` INT(11),
+	
 	OUT `status_code` TINYINT(1),
 	OUT `message_error` VARCHAR(255)
 )
 SP:BEGIN
 	
-	DECLARE `_amount` DECIMAL(20,2) DEFAULT 0;
+	DECLARE `_amount` DECIMAL(20,0) DEFAULT 0;
 	DECLARE `isExitMaterial` TINYINT(1)  DEFAULT 0;
 	DECLARE `warehouseSessionId` INT(11);
 	DECLARE `_code` VARCHAR(255);
@@ -491,12 +888,11 @@ SP:BEGIN
 	
    	DECLARE `_description` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
    	DECLARE `userId` INT(11);
-   	DECLARE `is_discount` TINYINT(1);
+   	DECLARE `isDiscount` TINYINT(1);
    	DECLARE `discountPercent` DECIMAL(10,2);
    	DECLARE `discountAmount` DECIMAL(10,0);
    	DECLARE `_vat` DECIMAL(5,2);
    	DECLARE `vatAmount` DECIMAL(20,2);
-   
    
    
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
@@ -508,55 +904,51 @@ SP:BEGIN
 	SET `message_error`='Success';
 
 	IF (`discountPercent` > 0 AND `discountAmount` > 0) THEN
-			SET `status_code`= 2;
-			SET `message_error`= 'Chỉ được phép nhập giảm giá phần trăm hoặc giảm giá tiền mặt!';
-			LEAVE SP;
+		SET `status_code`= 2;
+		SET `message_error`= 'Chỉ được phép nhập giảm giá phần trăm hoặc giảm giá tiền mặt!';
+		LEAVE SP;
 	END IF;
 
 -- 
 	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
 	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_warehouse_session_detail (
-														
-													    `category_id` INT(11),
-													    `category_name`  VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_unit_id` INT(11),
-													    `material_unit_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_id` INT(11),
-													    `material_name`  VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `amount` DECIMAL(10,2),
-													    `price` DECIMAL(20,2),
-													    `quantity` DECIMAL(20,2)
-														);
+	    `category_id` INT(11),
+	    `category_name`  VARCHAR(255),
+	    `material_unit_id` INT(11),
+	    `material_unit_name` VARCHAR(255),
+	    `material_id` INT(11),
+	    `material_name`  VARCHAR(255),
+	    `amount` DECIMAL(10,2),
+	    `price` DECIMAL(20,2),
+	    `quantity` DECIMAL(20,2)
+	) CHARACTER SET utf8 COLLATE utf8_general_ci;
 	
 -- 	insert bảng tạm
-	INSERT INTO tbl_warehouse_session_detail 			(
-						    							category_id,
-						    							category_name, 
-						    							material_unit_id,
-						    							material_unit_name,
-						    							material_id,
-						    							material_name,
-						    							amount,
-						    							price,
-						    							quantity
-						    							)
-				    							
-				  
-												SELECT 	od.category_id ,
-														od.category_name,
-														od.material_unit_id  ,
-														od.material_unit_name ,
-														od.material_id,
-														od.material_name,
-														(od.price * od.quantity ),
-														od.price ,
-														od.quantity
-				
-		
-	FROM 		orders o 
-	LEFT JOIN 	order_details od ON o.id = od.order_id 
-	WHERE 		o.id =`orderId`;
-	
+	INSERT INTO tbl_warehouse_session_detail (
+				category_id,
+				category_name, 
+				material_unit_id,
+				material_unit_name,
+				material_id,
+				material_name,
+				amount,
+				price,
+				quantity
+				)			 
+			SELECT 	od.category_id ,
+				od.category_name,
+				od.material_unit_id  ,
+				od.material_unit_name ,
+				od.material_id,
+				od.material_name,
+				(od.price * od.quantity ),
+				od.price ,
+				od.quantity
+
+	FROM 	orders o 
+		LEFT JOIN 	order_details od ON o.id = od.order_id 
+	WHERE 	o.id =`orderId`;
+
 -- lấy amount từ bảng tạm
 	SELECT 	SUM(t.amount)
 	INTO 	`_amount`
@@ -564,21 +956,19 @@ SP:BEGIN
 	
 	
 	SELECT 	o.vat ,
-			o.vat_amount ,
-			o.discount_percent ,
-			o.discount_amount ,
-			o.description,
-			o.user_id  
+		o.vat_amount ,
+		o.discount_percent ,
+		o.discount_amount ,
+		o.description,
+		o.user_id  
 	INTO 	`_vat`,
-			`vatAmount`,
-			`discountPercent`,
-			`discountAmount`,
-			`_description`,
-			`userId`
+		`vatAmount`,
+		`discountPercent`,
+		`discountAmount`,
+		`_description`,
+		`userId`
 	FROM 	orders o 
 	WHERE 	o.id=`orderId`;
-	
-	
 	
 	
 	SELECT 	COUNT(*)
@@ -591,101 +981,114 @@ SP:BEGIN
 
 	
 
-	IF (`discountPercent` > 0)	THEN
-		SET `is_discount` = 1;
-	END IF;
+	IF (`discountPercent` > 0) THEN
 	
-	IF (`discountAmount` > 0)	
-	THEN
-		SET `is_discount` = 2;
-	END IF;
+		SET `isDiscount` = 1;
 	
+	END IF;
+
+	
+	IF (`discountAmount` > 0) THEN
+	
+		SET `isDiscount` = 2;
+	END IF;
 	INSERT INTO warehouse_sessions  (
-									user_id,
-									supplier_id,
-									code,
-									amount,
-									discount_percent,
-									vat,
-									vat_amount,
-									discount_amount,
-									total_amount,
-									type,
-									status,
-									addition_fee_id,
-									receipt_number_no,
-									discount_type,
-									is_include_vat,
-									description
-									)
-			SELECT 					`userId`,
-									0,
-									`_code`,
-									`_amount`,
-									`discountPercent`,
-									`_vat`,
-									`vatAmount`,
-									`discountAmount`,
-									CASE 	WHEN `is_discount` = 2 
-											THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
-											WHEN `is_discount` = 1
-											THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
-											ELSE (`_amount`+(`_amount`*(`_vat`/100))) END,
-									1,
-									1,
-									0,
-									`countType`,
-									1,
-									CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
-									`_description`;
+				user_id,
+				supplier_id,
+				code,
+				amount,
+				discount_percent,
+				vat,
+				vat_amount,
+				discount_amount,
+				total_amount,
+				type,
+				status,
+				addition_fee_id,
+				receipt_number_no,
+				discount_type,
+				is_include_vat,
+				description
+				)
+	                    SELECT 	`userId`,
+				0,
+				`_code`,
+				`_amount`,
+				`discountPercent`,
+				`_vat`,
+				`vatAmount`,
+				`discountAmount`,
+				CASE WHEN `isDiscount` = 2 
+					THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
+			                 WHEN `isDiscount` = 1
+					THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
+				ELSE (`_amount`+(`_amount`*(`_vat`/100))) END,
+				1,
+				1,
+				0,
+				`countType`,
+				1,
+				CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
+				`_description`;
 							
-	SET `warehouseSessionId`=LAST_INSERT_ID();
+	SET `warehouseSessionId`= LAST_INSERT_ID();
 	
-					
+			
+		
 	INSERT INTO warehouse_session_details (
-											user_id,
-											warehouse_session_id,
-											category_id,
-											category_name,
-											material_unit_id,
-											material_unit_name,
-											material_id,
-											material_name,
-											price,
-											quantity,
-											total_amount,
-											warehouse_session_type,
-											warehouse_session_status
-											
-											)
-			SELECT 							`userId`,
-											`warehouseSessionId` AS warehouse_session_id,
-											tmpw.category_id,
-											tmpw.category_name,
-											IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
-											IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
-											tmpw.material_id,
-											tmpw.material_name,
-											tmpw.price,
-											tmpw.quantity,
-											(tmpw.price*tmpw.quantity) ,
-											1,
-											1 AS warehouse_session_status
-											
-	FROM 		tbl_warehouse_session_detail AS  tmpw;
-	
+				user_id,
+				warehouse_session_id,
+				category_id,
+				category_name,
+				material_unit_id,
+				material_unit_name,
+				material_id,
+				material_name,
+				price,
+				quantity,
+				total_amount,
+				warehouse_session_type,
+				warehouse_session_status
+				
+				)
+			SELECT 	`userId`,
+				`warehouseSessionId` AS warehouse_session_id,
+				tmpw.category_id,
+				tmpw.category_name,
+				IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
+				IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
+				tmpw.material_id,
+				tmpw.material_name,
+				tmpw.price,
+				tmpw.quantity,
+				(tmpw.price*tmpw.quantity) ,
+				1,
+				1 AS warehouse_session_status
+	FROM 	tbl_warehouse_session_detail AS  tmpw;
 	
 
 	SELECT 	w.*
 	FROM 	warehouse_sessions  w
- 	WHERE 	w.id =`warehouseSessionId`; 
+ 	WHERE 	w.id = `warehouseSessionId`; 
 	
 	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
 
 END
 
 
--------------
+
+
+
+
+
+
+
+
+
+--------------------
+
+
+
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_return_warehouse_session`(
 	IN `userId` INT(11),
@@ -709,12 +1112,12 @@ SP:BEGIN
 	DECLARE `categoryId` INT(11) ;
 	DECLARE `categoryName` VARCHAR(255) ;
 	DECLARE `materialUnitId` INT(11);
-    DECLARE `materialUnitName` VARCHAR(255);
-    DECLARE `materialName` VARCHAR(255);
+    	DECLARE `materialUnitName` VARCHAR(255);
+    	DECLARE `materialName` VARCHAR(255);
    	DECLARE `materialId` INT(11);
    	DECLARE `_price` DECIMAL(20,2);
    	DECLARE `_quantity` DECIMAL(10,2);
-   	DECLARE `is_discount` TINYINT(1);
+   	DECLARE `isDiscount` TINYINT(1);
    
    
    
@@ -727,76 +1130,87 @@ SP:BEGIN
 	SET `message_error`='Success';
 
 	IF (`discountPercent` > 0 AND `discountAmount` > 0) THEN
-			SET `status_code`= 2;
-			SET `message_error`= 'Chỉ được phép nhập discountPercent hoặc discountAmount.';
-			LEAVE SP;
+		SET `status_code`= 2;
+		SET `message_error`= 'Chỉ được phép nhập giảm giá phần trăm hoặc giảm giá tiền mặt.';
+		LEAVE SP;
 	END IF;
 
 	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
 	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_warehouse_session_detail (
-														
-													    `category_id` INT(11),
-													    `category_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_unit_id` INT(11),
-													    `material_unit_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_id` INT(11),
-													    `material_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `price` DECIMAL(20,2),
-													    `quantity` DECIMAL(20,2)
-														);
+	    `category_id` INT(11),
+	    `category_name` VARCHAR(255),
+	    `material_unit_id` INT(11),
+	    `material_unit_name` VARCHAR(255),
+	    `material_id` INT(11),
+	    `material_name` VARCHAR(255),
+	    `price` DECIMAL(20,2),
+	    `quantity` DECIMAL(20,2)
+	) CHARACTER SET utf8 COLLATE utf8_general_ci;
+
 	 SET `index` = 0;
 	 SET `itemCount` = JSON_LENGTH(`warehouseSessionDetail`);
+	
 	 WHILE `index` < `itemCount` DO
-	
 		
-		SET `materialId`=JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].material_id'));
-		SET `_quantity`=JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].quantity'));
-		
-		
-	
-		
+		SET `materialId`= JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].material_id'));
+		SET `_quantity`= JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].quantity'));
 
-		SELECT 		m.category_id,
-					c.name ,
-					m.unit_id ,
-					u.name,
-					m.name,
-					m.cost_price 
-		INTO 		`categoryId`,
-					`categoryName`,
-					`materialUnitId`,
-					`materialUnitName`,
-					`materialName`,
-					`_price`
-		FROM 		materials m 
-					LEFT JOIN 	categories c ON m.category_id =c.id 
-					LEFT JOIN 	units u ON u.id =m.unit_id 
-		WHERE 		m.id=`materialId`;
+		IF (SELECT 	COUNT(*)
+			FROM 	materials m
+			WHERE 	m.id = `materialId` 
+				AND m.status = 1
+				AND m.user_id = `userId`
+				) < 1 
+		THEN
+			SET `status_code`= 2;
+			SET `message_error`= 'nguyên liệu không tồn tại hoặc đã tắt.';
+			LEAVE SP;
+		END IF;	
+	
+		SELECT 	m.category_id,
+			c.name ,
+			m.unit_id ,
+			u.name,
+			m.name,
+			m.cost_price 
+		INTO 	`categoryId`,
+			`categoryName`,
+			`materialUnitId`,
+			`materialUnitName`,
+			`materialName`,
+			`_price`
+		FROM 	materials m 
+			LEFT JOIN categories c ON m.category_id =c.id 
+			LEFT JOIN units u ON u.id =m.unit_id 
+		WHERE 	m.id=`materialId`
+			AND m.user_id = `userId`;
 	
 		SET `_amount`=`_amount`+(`_price`*`_quantity`);
 	
-	    INSERT INTO tbl_warehouse_session_detail (
-				    							category_id,
-				    							category_name, 
-				    							material_unit_id,
-				    							material_unit_name,
-				    							material_id,
-				    							material_name,
-				    							price,
-				    							quantity
-				    							)
-				    							
-				    SELECT 						`categoryId`,
-				   								`categoryName`,
-				   								`materialUnitId`,
-				   								`materialUnitName`,
-				   								`materialId`,
-				   								`materialName`,
-				   								`_price`,
-				   								`_quantity`
-				   	GROUP BY 					`materialId`;				
-			
-	   	SET `index` = `index` + 1;
+	
+		INSERT INTO tbl_warehouse_session_detail (
+						category_id,
+						category_name, 
+						material_unit_id,
+						material_unit_name,
+						material_id,
+						material_name,
+						price,
+						quantity
+						)
+					    							
+					    SELECT  `categoryId`,
+						`categoryName`,
+						`materialUnitId`,
+						`materialUnitName`,
+						`materialId`,
+						`materialName`,
+						`_price`,
+						`_quantity`
+		GROUP BY 	`materialId`;				
+				
+		SET `index` = `index` + 1;
+	  
 	END WHILE;
 	
 	SELECT 	COUNT(*)
@@ -807,363 +1221,96 @@ SP:BEGIN
 	SET `countType`=`countType`+1;
 	SET `_code`= CONCAT('PTK','00000',`countType`) ;
 
-	IF (`discountPercent` > 0)	
-	THEN
-		SET `is_discount` = 1;
+
+	IF (`discountPercent` > 0) THEN
+	
+		SET `isDiscount` = 1;
+	
 	END IF;
 	
-	IF (`discountAmount` > 0)	
-	THEN
-		SET `is_discount` = 2;
+
+	IF (`discountAmount` > 0) THEN
+	
+		SET `isDiscount` = 2;
+	
 	END IF;
 	
+
 	INSERT INTO warehouse_sessions  (
-									user_id,
-									supplier_id,
-									code,
-									amount,
-									discount_percent,
-									vat,
-									vat_amount,
-									discount_amount,
-									total_amount,
-									type,
-									status,
-									addition_fee_id,
-									receipt_number_no,
-									discount_type,
-									is_include_vat,
-									description
-								)
-			SELECT 					`userId`,
-									0,
-									`_code`,
-									`_amount`,
-									`discountPercent`,
-									`_vat`,
-									(`_amount`*(`_vat`/100)),
-									`discountAmount`,
-									CASE 	WHEN `is_discount` = 2 
-											THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
-											WHEN `is_discount` = 1
-											THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
-											ELSE (`_amount`+(`_amount`*(`_vat`/100))) END,
-									3,
-									1,
-									0,
-									`countType`,
-									1,
-									CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
-									`_description`;
+				user_id,
+				supplier_id,
+				code,
+				amount,
+				discount_percent,
+				vat,
+				vat_amount,
+				discount_amount,
+				total_amount,
+				type,
+				status,
+				addition_fee_id,
+				receipt_number_no,
+				discount_type,
+				is_include_vat,
+				description
+				)
+			SELECT 	`userId`,
+				0,
+				`_code`,
+				`_amount`,
+				`discountPercent`,
+				`_vat`,
+				(`_amount`*(`_vat`/100)),
+				`discountAmount`,
+				CASE 	WHEN `isDiscount` = 2 
+						THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
+					WHEN `isDiscount` = 1
+						THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
+					ELSE (`_amount`+(`_amount`*(`_vat`/100))) END,
+				3,
+				1,
+				0,
+				`countType`,
+				1,
+				CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
+				`_description`;
+			
 							
 	SET `warehouseSessionId`=LAST_INSERT_ID();
 	
-	
  
 					
 	INSERT INTO warehouse_session_details (
-											user_id,
-											warehouse_session_id,
-											category_id,
-											category_name,
-											material_unit_id,
-											material_unit_name,
-											material_id,
-											material_name,
-											price,
-											quantity,
-											total_amount,
-											warehouse_session_type,
-											warehouse_session_status
-											
-											)
-			SELECT 							`userId`,
-											`warehouseSessionId` AS warehouse_session_id,
-											tmpw.category_id,
-											tmpw.category_name,
-											IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
-											IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
-											tmpw.material_id,
-											tmpw.material_name,
-											tmpw.price,
-											tmpw.quantity,
-											(tmpw.price*tmpw.quantity) ,
-											3 AS warehouse_session_type,
-											1 AS warehouse_session_status
-	FROM 	tbl_warehouse_session_detail AS  tmpw;
-
-	
-
-	SELECT 	w.*
-	FROM 	warehouse_sessions  w
- 	WHERE 	w.id =`warehouseSessionId`; 
-	
-	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
-
-END
-
-------------------
-CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_cancel_warehouse_session`(
-	IN `userId` INT(11),
-	IN `discountPercent` DECIMAL(20,2),
-	IN `_vat` DECIMAL(20,2),
-	IN `discountAmount` DECIMAL(20,2),
-	IN `_description` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-	IN `warehouseSessionDetail` TEXT,
-	OUT `status_code` TINYINT(1),
-	OUT `message_error` VARCHAR(255)
-)
-SP:BEGIN
-	DECLARE `index` TINYINT(3) DEFAULT 0;
-	DECLARE `itemCount` TINYINT(3) DEFAULT 0;
-	DECLARE `_amount` DECIMAL(20,2) DEFAULT 0;
-	DECLARE `isExitMaterial` TINYINT(1)  DEFAULT 0;
-	DECLARE `warehouseSessionId` INT(11);
-	DECLARE `_code` VARCHAR(255);
-	DECLARE `countType` INT(11);
--- warehouseSessionDetail
-	DECLARE `categoryId` INT(11) ;
-	DECLARE `categoryName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci ;
-	DECLARE `materialUnitId` INT(11);
-    DECLARE `materialUnitName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
-    DECLARE `materialName` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci;
-   	DECLARE `materialId` INT(11);
-   	DECLARE `_price` DECIMAL(20,2);
-   	DECLARE `_quantity` DECIMAL(10,2);
-   	DECLARE `quantityMaterial` DECIMAL(10,2);
-   	DECLARE `newQuantity` DECIMAL(10,2);
-   	DECLARE `is_discount` TINYINT(1);
-   
-   
-   
-	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
-		SET `status_code` = 1;
-		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
-	END;
-
-	SET `status_code`= 0;
-	SET `message_error`= 'Success';
-
-	IF (`discountPercent` > 0 AND `discountAmount` > 0) THEN
-			SET `status_code`= 2;
-			SET `message_error`= 'Chỉ được phép nhập giảm giá phần trăm hoặc giảm giá tiền mặt.';
-			LEAVE SP;
-	END IF;
-
-	DROP TEMPORARY TABLE IF EXISTS tbl_warehouse_session_detail;
-	CREATE TEMPORARY TABLE IF NOT EXISTS tbl_warehouse_session_detail (
-														
-													    `category_id` INT(11),
-													    `category_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_unit_id` INT(11),
-													    `material_unit_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `material_id` INT(11),
-													    `material_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-													    `price` DECIMAL(20,2),
-													    `quantity` DECIMAL(20,2)
-														);
-	 SET `index` = 0;
-	 SET `itemCount` = JSON_LENGTH(`warehouseSessionDetail`);
-	 WHILE `index` < `itemCount` DO
-	
-		
-		SET `materialId`=JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].material_id'));
-		SET `_quantity`=JSON_EXTRACT(warehouseSessionDetail, CONCAT('$[', `index`, '].quantity'));
-		
-		
-	
-		
-
-		SELECT 		m.category_id,
-					c.name ,
-					m.unit_id ,
-					u.name,
-					m.name,
-					m.cost_price 
-		INTO 		`categoryId`,
-					`categoryName`,
-					`materialUnitId`,
-					`materialUnitName`,
-					`materialName`,
-					`_price`
-		FROM 		materials m 
-					LEFT JOIN 	categories c ON m.category_id =c.id 
-					LEFT JOIN 	units u ON u.id =m.unit_id 
-		WHERE 		m.id=`materialId`;
-	
-		SET `_amount`=`_amount`+(`_price`*`_quantity`);
-	
--- 		tạo bảng tạm để tính tồn kho
-		DROP TEMPORARY TABLE IF EXISTS tbl_test;
-		CREATE TEMPORARY TABLE IF NOT EXISTS tbl_test (
-					
-		SELECT wsd.material_id ,
-				(
-				SUM(CASE WHEN wsd.warehouse_session_type = 0  
-					 					THEN quantity 
-				    					ELSE 0
-			  						END)
-		  				-
-			 				SUM(CASE WHEN warehouse_session_type = 1 
-					 					THEN quantity 
-				    					ELSE 0
-			  						END)
-		  				-
-							SUM(CASE WHEN warehouse_session_type = 2 
-					 					THEN quantity 
-				    					ELSE 0
-			  						END)
-						+
-							SUM(CASE WHEN warehouse_session_type = 3  
-					 					THEN quantity 
-				    					ELSE 0
-			  						END)
-			  			)*(100-m.wastage_rate )/100 AS `system_last_quantity`
+				user_id,
+				warehouse_session_id,
+				category_id,
+				category_name,
+				material_unit_id,
+				material_unit_name,
+				material_id,
+				material_name,
+				price,
+				quantity,
+				total_amount,
+				warehouse_session_type,
+				warehouse_session_status
 				
-		
-		FROM warehouse_session_details AS wsd 
-		LEFT JOIN materials AS m ON wsd.material_id =m.id
-		WHERE wsd.material_id = `materialId`
-				);
-			
-		
-		
-		SELECT 	t.system_last_quantity
-		INTO 	`newQuantity`
-		FROM 	tbl_test AS t;
-		
-		IF `newQuantity`< `_quantity` THEN
-			SET `status_code`= 2;
-			SET `message_error`= CONCAT('số lượng xuất ra của nguyên liệu ',`materialName`,' vượt quá số lượng tồn kho');
-			LEAVE SP;
-		END IF;
-	
-	
-	    INSERT INTO tbl_warehouse_session_detail (
-				    							category_id,
-				    							category_name, 
-				    							material_unit_id,
-				    							material_unit_name,
-				    							material_id,
-				    							material_name,
-				    							price,
-				    							quantity
-				    							)
-				    							
-				    SELECT 						`categoryId`,
-				   								`categoryName`,
-				   								`materialUnitId`,
-				   								`materialUnitName`,
-				   								`materialId`,
-				   								`materialName`,
-				   								`_price`,
-				   								`_quantity`
-					WHERE 						`newQuantity`>`_quantity`
-				   	GROUP BY 					`materialId`;				
-				   			
-		
-		
-	
-	   	SET `index` = `index` + 1;
-	END WHILE;
-	
--- 	
--- 	SELECT 	COUNT(wsd.material_id)
--- 	FROM 	tbl_warehouse_session_detail AS wsd;
-	
-	SELECT 	COUNT(*)
-	INTO 	`countType`
-	FROM 	warehouse_sessions AS ws
-	WHERE 	ws.`type`= 2 AND ws.user_id = `userId`;
-
-	SET `countType`=`countType`+1;
-	SET `_code`=CONCAT('PHK','00000',`countType`) ;
-	
-	IF (`discountPercent` > 0)	THEN
-		SET `is_discount` = 1;
-	END IF;
-	
-	IF (`discountAmount` > 0)	
-	THEN
-		SET `is_discount` = 2;
-	END IF;
-	
-	
-	INSERT INTO warehouse_sessions  (
-									user_id,
-									supplier_id,
-									code,
-									amount,
-									discount_percent,
-									vat,
-									vat_amount,
-									discount_amount,
-									total_amount,
-									type,
-									status,
-									addition_fee_id,
-									receipt_number_no,
-									discount_type,
-									is_include_vat,
-									description
-									)
-			SELECT 					`userId`,
-									0,
-									`_code`,
-									`_amount`,
-									`discountPercent`,
-									`_vat`,
-									(`_amount`*(`_vat`/100)),
-									`discountAmount`,
-									CASE 	WHEN `is_discount` = 2 
-											THEN (`_amount`+(`_amount`*(`_vat`/100)-`discountAmount`))
-											WHEN `is_discount` = 1
-											THEN (`_amount`+(`_amount`*(`_vat`/100)-(`_amount`*(`discountPercent`/100))))
-											ELSE (`_amount`+(`_amount`*(`_vat`/100))) END,
-									2,
-									1,
-									0,
-									`countType`,
-									1,
-									CASE WHEN `_vat` > 0 THEN 1 ELSE 0 END,
-									`_description`;
-							
-	SET `warehouseSessionId`= LAST_INSERT_ID();
-	
-	
- 
-					
-	INSERT INTO warehouse_session_details (
-											user_id,
-											warehouse_session_id,
-											category_id,
-											category_name,
-											material_unit_id,
-											material_unit_name,
-											material_id,
-											material_name,
-											price,
-											quantity,
-											total_amount,
-											warehouse_session_type,
-											warehouse_session_status
-											
-											)
-			SELECT 							`userId`,
-											`warehouseSessionId` AS warehouse_session_id,
-											tmpw.category_id,
-											tmpw.category_name,
-											IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
-											IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
-											tmpw.material_id,
-											tmpw.material_name,
-											tmpw.price,
-											tmpw.quantity,
-											(tmpw.price*tmpw.quantity) ,
-											2 AS warehouse_session_type,
-											1 AS warehouse_session_status
+				)
+			SELECT 	`userId`,
+				`warehouseSessionId` AS warehouse_session_id,
+				tmpw.category_id,
+				tmpw.category_name,
+				IFNULL(tmpw.material_unit_id,0) AS material_unit_id  ,
+				IFNULL(tmpw.material_unit_name,'') AS material_unit_name,
+				tmpw.material_id,
+				tmpw.material_name,
+				tmpw.price,
+				tmpw.quantity,
+				(tmpw.price*tmpw.quantity) ,
+				3 AS warehouse_session_type,
+				1 AS warehouse_session_status
 	FROM 	tbl_warehouse_session_detail AS  tmpw;
-	
+
 	
 
 	SELECT 	w.*

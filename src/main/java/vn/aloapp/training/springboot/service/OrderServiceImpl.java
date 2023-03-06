@@ -25,13 +25,13 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Order findOne(long id) throws Exception {
-		return orderDao.findOne(id);
+	public Order findByOrderByUserId(long id, int userId) throws Exception {
+		return orderDao.findByOrderByUserId(id, userId);
 	}
 
 	@Override
-	public List<Order> findAll() throws Exception {
-		return orderDao.findAll();
+	public List<Order> findOrdersByUserId(int userId) throws Exception {
+		return orderDao.findOrdersByUserId(userId);
 	}
 
 }

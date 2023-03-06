@@ -20,15 +20,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import vn.aloapp.training.springboot.entity.Order;
+import vn.aloapp.training.springboot.entity.OrderDetail;
+import vn.aloapp.training.springboot.entity.User;
 import vn.aloapp.training.springboot.request.CRUDOrderRequest;
 import vn.aloapp.training.springboot.response.BaseResponse;
+import vn.aloapp.training.springboot.response.OrderDetailResponse;
 import vn.aloapp.training.springboot.response.OrderResponse;
 import vn.aloapp.training.springboot.service.OrderDetailService;
 import vn.aloapp.training.springboot.service.OrderService;
 import vn.aloapp.training.springboot.service.WarehouseSessionService;
-import vn.aloapp.training.springboot.entity.Order;
-import vn.aloapp.training.springboot.entity.OrderDetail;
-import vn.aloapp.training.springboot.entity.User;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -43,7 +44,7 @@ public class OrderController extends BaseController{
 	@Autowired
 	OrderDetailService orderDetailService;
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+
 	@PostMapping(value = "/create", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDOrderRequest request,
 			@RequestHeader(value = "authorization")  String token) throws Exception {
@@ -66,41 +67,42 @@ public class OrderController extends BaseController{
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+
 	@GetMapping(value = "/{id}/detail", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getById(@PathVariable("id") long id,
 			@RequestHeader(value = "authorization")  String token) throws Exception {
 		BaseResponse response = new BaseResponse();
 		
-		this.accessToken(token);
-		Order order = orderService.findOne(id);
+		User usertoken = this.accessToken(token);
+		Order order = orderService.findByOrderByUserId(id, usertoken.getId());
 
 		if (order == null) {
 			response.setStatus(HttpStatus.BAD_REQUEST);
-			response.setMessageError(HttpStatus.BAD_REQUEST.name());
-			return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+			response.setMessageError("Mã đơn hàng không tìm thấy");
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
 
 		List<OrderDetail> orderDetails = orderDetailService.spGOrderDetailByOrderId(id);
 
 		OrderResponse orderResponse = new OrderResponse(order);
-		orderResponse.getOrderDetails().setList(orderDetails);
+		orderResponse.setOrderDetails(new OrderDetailResponse().mapToList(orderDetails));
 
 		response.setData(orderResponse);
 
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	
 	@GetMapping(value = "/get-list", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getList(
 			@RequestHeader(value = "authorization")  String token) throws Exception {
 		
-		this.accessToken(token);
+		User usertoken = this.accessToken(token);
+		
 		BaseResponse response = new BaseResponse();
 
-		List<Order> orders = orderService.findAll();
+		List<Order> orders = orderService.findOrdersByUserId(usertoken.getId());
 
 		List<Long> listIdOrder = new ArrayList<>();
 
@@ -110,16 +112,16 @@ public class OrderController extends BaseController{
 
 		List<OrderDetail> orderDetails = orderDetailService
 				.spGOrderDetailByOrderIds(new ObjectMapper().writeValueAsString(listIdOrder));
+		
+		List<OrderDetailResponse> orderDetailResponses = new OrderDetailResponse().mapToList(orderDetails);
 
 		orderResponses.forEach(order -> {
-
-			order.getOrderDetails().setList(
-					orderDetails.stream().filter(y -> y.getOrderId() == order.getId()).collect(Collectors.toList()));
+			order.setOrderDetails(orderDetailResponses.stream().filter(y -> y.getOrderId() == order.getId()).collect(Collectors.toList()));
 		});
 
 		response.setData(orderResponses);
 
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
 

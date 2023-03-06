@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,8 +39,7 @@ public class WarehouseSessionController extends BaseController {
 	WarehouseSessionDetailService warehouseSessionDetailService; 
 	
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@RequestMapping(value = "/{id}/detail", method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
+	@GetMapping(value = "/{id}/detail",produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getById(@PathVariable("id") Long id,
 			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
@@ -53,14 +50,14 @@ public class WarehouseSessionController extends BaseController {
 		if (warehouseSession == null) {
 			response.setStatus(HttpStatus.BAD_REQUEST);
 			response.setMessageError(HttpStatus.BAD_REQUEST.name());
-			return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
 		List<WarehouseSessionDetail> warehouseSessionDetails = warehouseSessionDetailService.spGWarehouseSessionDetailByWarehouseSessionId(warehouseSession.getId());
 
 		List<WarehouseSessionDetailResponse> warehouseSessionDetailResponses = new WarehouseSessionDetailResponse().mapToList(warehouseSessionDetails);
 		
 		WarehouseSessionResponse warehouseSessionResponse = new WarehouseSessionResponse(warehouseSession);
-		warehouseSessionResponse.getList().setList(warehouseSessionDetailResponses);
+		warehouseSessionResponse.setList(warehouseSessionDetailResponses);
 		
 		response.setData(warehouseSessionResponse);
 
@@ -68,7 +65,6 @@ public class WarehouseSessionController extends BaseController {
 	}
 	
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/create/import", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> createWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
 			@RequestHeader(value = "authorization") String token) throws Exception {
@@ -89,9 +85,8 @@ public class WarehouseSessionController extends BaseController {
 	}
 	
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/create/export", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> ExportWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
+	public ResponseEntity<BaseResponse> exportWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
 			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
 		User usertoken = this.accessToken(token);
@@ -106,7 +101,9 @@ public class WarehouseSessionController extends BaseController {
 		
 		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 	}
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	
+	
+	
 	@PostMapping(value = "/create/cancel", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> cancelWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
 			@RequestHeader(value = "authorization") String token) throws Exception {
@@ -122,10 +119,11 @@ public class WarehouseSessionController extends BaseController {
 		
 		response.setData(new WarehouseSessionResponse(warehouseSession));
 		
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	
+	
 	@PostMapping(value = "/create/return", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> returnWarehouseSession( @Valid @RequestBody CRUDWarehouseSessionRequest wrapper,
 			@RequestHeader(value = "authorization") String token) throws Exception {
@@ -142,7 +140,7 @@ public class WarehouseSessionController extends BaseController {
 		
 		response.setData(new WarehouseSessionResponse(warehouseSession));
 		
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
 	

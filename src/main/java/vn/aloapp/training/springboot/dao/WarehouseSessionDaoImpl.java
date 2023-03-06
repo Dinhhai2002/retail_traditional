@@ -172,7 +172,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 	}
 
 	@Override
-	public void spUExportWarehouseSessionFromOrder(long id) throws Exception {
+	public void spUExportWarehouseSessionFromOrder(long orderId) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_export_warehouse_session_from_order", WarehouseSession.class)
 
@@ -181,7 +181,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 
-		query.setParameter("orderId", id);
+		query.setParameter("orderId", orderId);
 		
 		
 		int statusCode = (int) query.getOutputParameterValue("status_code");

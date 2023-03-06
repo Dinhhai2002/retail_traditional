@@ -68,7 +68,7 @@ public class BaseController {
 
 	public String formatDate(String inputDate) throws ParseException
 	{
-        SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        SimpleDateFormat inputDateFormat = new SimpleDateFormat("dd/MM/yyyy");
         Date inputDate1 = inputDateFormat.parse(inputDate);
 
         SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -93,8 +93,8 @@ public class BaseController {
 			User user = userService.findOne(map.getId());
 			
 			
-			if (user.getIsLogin() == 0)
-				throw new Exception("tài khoản chưa đăng nhập");
+			if (user.getIsLogin() == 0 && user.getAccessToken()== "")
+				throw new Exception("Tài khoản chưa đăng nhập");
 			if (user != null)
 				return user;
 			else

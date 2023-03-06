@@ -1,15 +1,12 @@
 package vn.aloapp.training.springboot.response;
 
-import java.util.Date;
+import java.text.ParseException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import vn.aloapp.training.common.UtilsResponse;
 import vn.aloapp.training.springboot.entity.Material;
 
 public class MaterialResponse{
@@ -54,8 +51,8 @@ public class MaterialResponse{
 	
 	private int status;
 	    
-	@JsonProperty("create_at")
-	private Date createAt;
+	@JsonProperty("created_at")
+	private String createdAt;
 	
 	public MaterialResponse() {
 		
@@ -77,15 +74,18 @@ public class MaterialResponse{
 		this.outStockAlertQuantity = entity.getOutStockAlertQuantity();
 		this.retailPrice = entity.getRetailPrice();
 		this.costPrice = entity.getCostPrice();
-		this.status = entity.getStatus();
-		this.createAt = entity.getCreatedAt();
+		this.status = entity.getStatus() ? 1 : 0;
+		try {
+			this.createdAt = UtilsResponse.formatDate(entity.getCreatedAt().toString());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	
 	public List<MaterialResponse> mapToList(List<Material> entities) {
 		return entities.stream().map(x -> new MaterialResponse(x)).collect(Collectors.toList());
 	}
-
 
 	public int getId() {
 		return id;
@@ -237,13 +237,13 @@ public class MaterialResponse{
 	}
 
 
-	public Date getCreateAt() {
-		return createAt;
+	public String getCreatedAt() {
+		return createdAt;
 	}
 
 
-	public void setCreateAt(Date createAt) {
-		this.createAt = createAt;
+	public void setCreatedAt(String createdAt) {
+		this.createdAt = createdAt;
 	}
 
 	

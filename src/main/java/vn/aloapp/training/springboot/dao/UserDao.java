@@ -21,4 +21,10 @@ public interface UserDao {
 	String spULogin(String phone, String password) throws Exception;
 
 	String signOut(User user) throws Exception;
+
+	void findUserByPhoneAndUpdateVerifyCode(String phone, int verifyCode);
+
+	User findUserByPhone(String phone) throws Exception;
+
+	void resetPasswordByUser(String password, int id) throws Exception;
 }
