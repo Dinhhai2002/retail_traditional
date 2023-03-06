@@ -1,5 +1,7 @@
 package vn.aloapp.training.springboot.request;
 
+import java.math.BigDecimal;
+
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
@@ -9,32 +11,31 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class OrderDetailRequest {
 	
 	
-	@Min(value = 0 , message = "nhỏ nhất 0")
-	@Max(value = 10000000 , message = "lớn nhất 10.000.000")
+	@Min(value = 1 , message = "material_id nhỏ nhất 1")
+	@Max(value = 10000000 , message = "material_id lớn nhất 10.000.000")
 	@JsonProperty("material_id")
-	private int material_id;
+	private int materialId;
 	
 	
-	@Min(value = 0 , message = "nhỏ nhất 0")
-	@Max(value = 10000 , message = "lớn nhất 1000")
-	private int quantity;
+	@Min(value = 1 , message = "materialId nhỏ nhất 1")
+	@Max(value = 10000 , message = "materialId lớn nhất 1000")
+	private BigDecimal quantity;
 
 	
 
-	public int getMaterial_id() {
-		return material_id;
+	public int getMaterialId() {
+		return materialId;
 	}
 
-	public void setMaterial_id(int material_id) {
-		this.material_id = material_id;
+	public void setMaterialId(int materialId) {
+		this.materialId = materialId;
 	}
 
-
-	public int getQuantity() {
+	public BigDecimal getQuantity() {
 		return quantity;
 	}
 
-	public void setQuantity(int quantity) {
+	public void setQuantity(BigDecimal quantity) {
 		this.quantity = quantity;
 	}
 

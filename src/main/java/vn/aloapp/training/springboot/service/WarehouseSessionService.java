@@ -7,15 +7,20 @@ public interface WarehouseSessionService {
 
 	WarehouseSession findOne(Long id) throws Exception;
 	
-	WarehouseSession importWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception;
 	
-	WarehouseSession exportWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception;
+	WarehouseSession exportWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception;
 	
-	WarehouseSession cancelWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception;
+	WarehouseSession cancelWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception;
 	
-	WarehouseSession returnWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception;
+	WarehouseSession returnWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception;
 
-	void spUExportWarehouseSessionFromOrder(long id) throws Exception;
+	void spUExportWarehouseSessionFromOrder(long userId) throws Exception;
+
+	WarehouseSession importWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception;
 
 	
 }

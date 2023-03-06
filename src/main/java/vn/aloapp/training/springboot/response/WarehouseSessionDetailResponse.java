@@ -1,10 +1,13 @@
 package vn.aloapp.training.springboot.response;
 
+import java.math.BigDecimal;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 import vn.aloapp.training.springboot.entity.WarehouseSessionDetail;
 
@@ -38,7 +41,7 @@ public class WarehouseSessionDetailResponse {
 	
 	private double price;
 	
-	private float quantity;
+	private BigDecimal quantity;
 	
 	@JsonProperty("total_amount")
 	private double totalAmount;
@@ -49,8 +52,8 @@ public class WarehouseSessionDetailResponse {
 	@JsonProperty("warehouse_session_status")
 	private int warehouseSessionStatus;
 	
-	@JsonProperty("create_at")
-	private Date createAt;
+	@JsonProperty("created_at")
+	private String createdAt;
 	
 	public WarehouseSessionDetailResponse() {
 		
@@ -71,7 +74,11 @@ public class WarehouseSessionDetailResponse {
 		this.totalAmount = entity.getTotalAmount();
 		this.warehouseSessionType = entity.getWarehouseSessionType();
 		this.warehouseSessionStatus = entity.getWarehouseSessionStatus();
-		this.createAt = entity.getCreatedAt();	
+		try {
+			this.createdAt = UtilsResponse.formatDate(entity.getCreatedAt().toString());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 		
 	}
 	
@@ -181,12 +188,12 @@ public class WarehouseSessionDetailResponse {
 	}
 
 
-	public float getQuantity() {
+	public BigDecimal getQuantity() {
 		return quantity;
 	}
 
 
-	public void setQuantity(float quantity) {
+	public void setQuantity(BigDecimal quantity) {
 		this.quantity = quantity;
 	}
 
@@ -221,13 +228,13 @@ public class WarehouseSessionDetailResponse {
 	}
 
 
-	public Date getCreateAt() {
-		return createAt;
+	public String getCreatedAt() {
+		return createdAt;
 	}
 
 
-	public void setCreateAt(Date createAt) {
-		this.createAt = createAt;
+	public void setCreatedAt(String createAt) {
+		this.createdAt = createAt;
 	}
 
 	

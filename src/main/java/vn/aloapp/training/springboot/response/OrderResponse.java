@@ -1,11 +1,14 @@
 package vn.aloapp.training.springboot.response;
 
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import vn.aloapp.training.common.UtilsResponse;
 import vn.aloapp.training.springboot.entity.Order;
 
 
@@ -52,14 +55,13 @@ public class OrderResponse {
 
 	private String description;
 	
-	@JsonProperty("create_at")
-	private Date createAt;
+	@JsonProperty("created_at")
+	private String createdAt;
 	
-	 @JsonProperty("list")
-	private ObjectList orderDetails;
+	@JsonProperty("list")
+	private List<OrderDetailResponse> orderDetails;
 	 
 	 public OrderResponse() {
-		// TODO Auto-generated constructor stub
 	}
 	 
 	public OrderResponse (Order entity) {
@@ -79,8 +81,12 @@ public class OrderResponse {
 		this.status = entity .getStatus();
 		this.receiptNumberNo = entity.getReceiptNumberNo();
 		this.description = entity.getDescription();
-		this.createAt = entity.getCreatedAt();
-		this.orderDetails = new ObjectList<>();
+		try {
+			this.createdAt = UtilsResponse.formatDate(entity.getCreatedAt().toString());
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		this.orderDetails = new ArrayList<>();
 	}
 	
 	public List<OrderResponse> mapToList(List<Order> entities) {
@@ -215,22 +221,24 @@ public class OrderResponse {
 		this.description = description;
 	}
 
-	public Date getCreateAt() {
-		return createAt;
+
+	public String getCreatedAt() {
+		return createdAt;
 	}
 
-	public void setCreateAt(Date createAt) {
-		this.createAt = createAt;
+	public void setCreatedAt(String createdAt) {
+		this.createdAt = createdAt;
 	}
 
-	public ObjectList getOrderDetails() {
+	public List<OrderDetailResponse> getOrderDetails() {
 		return orderDetails;
 	}
 
-	public void setOrderDetails(ObjectList orderDetails) {
+	public void setOrderDetails(List<OrderDetailResponse> orderDetails) {
 		this.orderDetails = orderDetails;
 	}
 
+	
 	
 	
 }

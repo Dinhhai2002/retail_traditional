@@ -26,41 +26,46 @@ public class UnitServiceImpl implements UnitService{
 
 
 	@Override
-	public Unit findOne(Integer id) throws Exception {
-		return unitDao.findOne(id);
+	public Unit findByUserIdAndUnitId(int userId, int id) throws TechresHttpException {
+		return unitDao.findByUserIdAndUnitId(userId, id);
 	}
 
 	@Override
-	public Unit spUUpdateUnit(Unit unit) throws Exception {
+	public Unit spUUpdateUnit(Unit unit) throws TechresHttpException {
 		return unitDao.spUUpdateUnit(unit);
 		
 	}
 
 
 	@Override
-	public void spUChangeStatusUnit(int status, Integer id) throws Exception{
+	public void spUChangeStatusUnit(int status, Integer id) throws TechresHttpException{
 		unitDao.spUChangeStatusUnit(status, id);
 		
 	}
 
 
 	@Override
-	public List<Unit> spListUnit(int status) throws TechresHttpException {
-		return unitDao.spListUnit(status);
-	}
-
-
-	@Override
-	public List<UnitModel> spGUnitByMaterial(int id) throws Exception {
-		// TODO Auto-generated method stub
+	public List<UnitModel> spGUnitByMaterial(int id) throws TechresHttpException {
 		return unitDao.spGUnitByMaterial(id);
 	}
 
 
 	@Override
-	public void update(Unit unit) throws Exception {
+	public void update(Unit unit) throws TechresHttpException {
 		unitDao.update(unit);
 		
+	}
+
+
+	@Override
+	public List<Unit> spGFilterUnits(int userId, String keyword, int status) throws TechresHttpException {
+		return unitDao.spGFilterUnits(userId, keyword, status);
+	}
+
+
+	@Override
+	public Unit findByUserIdAndUnitIdAndStatus(int userId, int unitId, int status) throws TechresHttpException {
+		return unitDao.findByUserIdAndUnitIdAndStatus(userId, unitId, status);
 	}
 
 }

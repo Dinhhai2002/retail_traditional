@@ -14,66 +14,69 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import vn.aloapp.training.springboot.entity.Category;
-import vn.aloapp.training.springboot.entity.CategoryModel;
 import vn.aloapp.training.springboot.entity.User;
 import vn.aloapp.training.springboot.request.CRUDCategoryRequest;
 import vn.aloapp.training.springboot.request.CategoryRequest;
 import vn.aloapp.training.springboot.response.BaseResponse;
+import vn.aloapp.training.springboot.response.CategoryModel;
 import vn.aloapp.training.springboot.response.CategoryResponse;
 import vn.aloapp.training.springboot.service.CategoryService;
 import vn.aloapp.training.springboot.service.MaterialService;
 
 @RestController
 @RequestMapping("/api/v1/categories")
-public class CategoryController extends BaseController{
+public class CategoryController extends BaseController {
 
 	@Autowired
 	CategoryService categoryService;
+
 	@Autowired
 	MaterialService materialService;
 
-	// create Category
-	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	// get list Category
+	@GetMapping(value = "", produces = { MediaType.APPLICATION_JSON_VALUE })
+	public ResponseEntity<BaseResponse> getList(@RequestHeader(value = "authorization") String token,
+			@RequestParam(name = "keyword", defaultValue = "", required = false) String keyword,
+			@RequestParam(name = "sort", defaultValue = "0", required = false) int sort,
+			@RequestParam(name = "status", defaultValue = "-1", required = false) int status) throws Exception {
+
+		BaseResponse response = new BaseResponse();
+		User usertoken = this.accessToken(token);
+
+		response.setData(new CategoryResponse().mapToList(categoryService.spGFilterCategories(usertoken.getId(), keyword, sort, status)));
+		return new ResponseEntity<>(response, HttpStatus.OK);
+
+	}
+
 	@PostMapping(value = "/create", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDCategoryRequest request,
-			@RequestHeader(value = "authorization") String token
-			) throws Exception {
+			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
 
-		User usertoken = this.accessToken(token);
-		
-		Category category = new Category();
-
-		category.setName(request.getName());
-		category.setUserId(usertoken.getId());
-		category.setSort(request.getSort());
-		category.setDescription(request.getDescription());
-
-		response.setData(new CategoryResponse(categoryService.spUCreateCategory(category)));
+		response.setData(new CategoryResponse(categoryService.spUCreateCategory(this.accessToken(token).getId(),
+				request.getName(), request.getSort(), request.getDescription())));
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	// update Category
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/{id}/update", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> update(@PathVariable("id") Integer id,
-			@Valid @RequestBody CRUDCategoryRequest request,
-			@RequestHeader(value = "authorization") String token
-			) throws Exception {
+			@Valid @RequestBody CRUDCategoryRequest request, @RequestHeader(value = "authorization") String token)
+			throws Exception {
 		BaseResponse response = new BaseResponse();
-		Category category = categoryService.findOne(id);
-		
+
 		User usertoken = this.accessToken(token);
+		Category category = categoryService.findByUserIdAndCategoryId(usertoken.getId(), id);
 
 		if (category == null) {
 			response.setStatus(HttpStatus.BAD_REQUEST);
-			response.setMessageError(HttpStatus.BAD_REQUEST.name());
-			return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+			response.setMessageError("Không tìm thấy danh mục có mã là: " + id);
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
 
 		category.setName(request.getName());
@@ -82,87 +85,77 @@ public class CategoryController extends BaseController{
 		category.setDescription(request.getDescription());
 		response.setData(new CategoryResponse(categoryService.spUUpdateCategory(category)));
 
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-
 	// get Category detail
-	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+
 	@GetMapping(value = "/{id}/detail", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getById(@PathVariable("id") Integer id,
-			@RequestHeader(value = "authorization") String token
-			) throws Exception {
+			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
-		
-		this.accessToken(token);
-		Category category = categoryService.findOne(id);
+
+		User usertoken = this.accessToken(token);
+		Category category = categoryService.findByUserIdAndCategoryId(usertoken.getId(), id);
 
 		if (category == null) {
 			response.setStatus(HttpStatus.BAD_REQUEST);
-			response.setMessageError(HttpStatus.BAD_REQUEST.name());
-			return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+			response.setMessageError("Không tìm thấy loại có mã là: " + id);
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
 
 		response.setData(new CategoryResponse(category));
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
 
-	// change status Category
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/{id}/change-status", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> changeStatus(@PathVariable("id") int id,
-			@RequestBody CategoryRequest categoryRequest,
-			@RequestHeader(value = "authorization") String token) throws Exception {
+			@Valid @RequestBody CategoryRequest categoryRequest, @RequestHeader(value = "authorization") String token)
+			throws Exception {
 		BaseResponse response = new BaseResponse();
-		
-		this.accessToken(token);
 
-		Category category = categoryService.findOne(id);
+		User usertoken = this.accessToken(token);
+		Category category = categoryService.findByUserIdAndCategoryId(usertoken.getId(), id);
 
 		if (category == null) {
 			response.setStatus(HttpStatus.BAD_REQUEST);
-			response.setMessageError(HttpStatus.BAD_REQUEST.name());
-			return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+			response.setMessageError("Không tìm thấy loại có mã là: " + id);
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
 
-		List<CategoryModel> categoryModel = categoryService.spGCategoriesV2(id);
+		if (categoryRequest.getIsAccept() == 0 && category.getStatus()) {
+			List<CategoryModel> categoryModels = categoryService.spGCategoriesV2(usertoken.getId(), id);
+			if (categoryModels.stream().anyMatch(x -> !x.getLists().isEmpty())) {
 
-		if (categoryRequest.getIsAccept() == 0 && category.getStatus() == 1) {
-			if (categoryModel.stream().filter(x -> x.getLists().size() != 0) != null) {
 				response.setStatus(HttpStatus.MULTIPLE_CHOICES);
 				response.setMessageError(
 						" Có nguyên liệu đang nằm trong danh mục này , bạn có muốn tắt danh mục này không ");
 			}
+			response.setStatus(HttpStatus.MULTIPLE_CHOICES);
+			response.setMessageError("Bạn có chắc muốn đổi trạng thái? nếu có thay đổi giá trị is_accept là 1.");
+
 		} else {
 
-			if (category.getStatus() == 1) {
-				category.setStatus(0);
-				materialService.spUDeleteCategoryIdByMaterial(id);
-			} else {
-				category.setStatus(1);
-			}
+			category.setStatus(!category.getStatus());
 			categoryService.update(category);
+
+			if (!category.getStatus())
+				materialService.spUDeleteCategoryIdByMaterial(id);
 		}
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
-
-	}
-	
-	
-	// get list Category
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@GetMapping(value = "/get-list", produces = { MediaType.APPLICATION_JSON_VALUE })
-	public ResponseEntity<BaseResponse> getListTreeV2(@RequestHeader(value = "authorization") String token) throws Exception {
-		BaseResponse response = new BaseResponse();
-		this.accessToken(token);
-		List<CategoryModel> categories = categoryService.spGCategoriesV2(1);
-
-		response.setData(categories);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
+
+	// get list Category
+//	@GetMapping(value = "/get-tree", produces = { MediaType.APPLICATION_JSON_VALUE })
+//	public ResponseEntity<BaseResponse> getListTreeV2(@RequestHeader(value = "authorization") String token)
+//			throws Exception {
+//		BaseResponse response = new BaseResponse();
+//		User usertoken = this.accessToken(token);
+//		response.setData(new CategoryResponse().mapToList(categoryService.findByCategoryByUserId(usertoken.getId())));
+//		return new ResponseEntity<>(response, HttpStatus.OK);
+//
+//	}
 
 }

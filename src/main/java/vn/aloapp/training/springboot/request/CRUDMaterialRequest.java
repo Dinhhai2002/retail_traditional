@@ -2,7 +2,7 @@ package vn.aloapp.training.springboot.request;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
 
 import org.hibernate.validator.constraints.Length;
 
@@ -11,49 +11,38 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class CRUDMaterialRequest extends BaseRequest{
 
 	
-	@NotNull(message = "Tên không được phép null")
-	@Length(max = 255, message = "Không được phép lớn hơn 255 kí tự")
+	@NotEmpty(message = "name không được phép để trống")
+	@Length(max = 255, message = "name không được phép lớn hơn 255 kí tự")
 	private String name;
 
-	@Min(value = 0, message = "nhỏ nhất 0")
-	@JsonProperty("user_id")
-	private int userId;
-
-	@Length(max = 255, message = "Không được phép lớn hơn 255 kí tự")
-	private String avatar;
-
-	@Length(max = 255, message = "Không được phép lớn hơn 255 kí tự")
-	@JsonProperty("avatar_thumb")
-	private String avatarThumb;
-
-	@Min(value = 0, message = "nhỏ nhất 0")
+	@Min(value = 0, message = "category_id nhỏ nhất 0")
 	@JsonProperty("category_id")
 	private int categoryId;
 
-	@Min(value = 0, message = "nhỏ nhất 0")
+	@Min(value = 0, message = "unit_id nhỏ nhất 0")
 	@JsonProperty("unit_id")
 	private int unitId;
 
-	@Min(value = 0 , message = "nhỏ nhất 0.")
-	@Max(value = 100, message = "lớn nhất 100.")
+	@Min(value = 0 , message = "wastage_rate nhỏ nhất 0.")
+	@Max(value = 100, message = "wastage_rate lớn nhất 100.")
 	@JsonProperty("wastage_rate")
 	private float wastageRate;
 
-	@Min(value = 0 , message = "nhỏ nhất 0.")
-	@Max(value = 10000, message = "lớn nhất 10000.")
+	@Min(value = 0 , message = "out_stock_alert_quantity nhỏ nhất 0.")
+	@Max(value = 10000, message = "out_stock_alert_quantity lớn nhất 10000.")
 	@JsonProperty("out_stock_alert_quantity")
 	private float outStockAlertQuantity;
 
-	@Min(value = 0 , message = "nhỏ nhất 0.")
-	@Max(value = 10000000, message = "lớn nhất 10.000.000.")
-	@NotNull(message = "out_stock_alert_quantity không được phép null")
+	@Min(value = 0 , message = "retail_price nhỏ nhất 0.")
+	@Max(value = 10000000, message = "retail_price lớn nhất 10.000.000.")
 	@JsonProperty("retail_price")
 	private double retailPrice;
 
-	@Min(value = 0 , message = "nhỏ nhất 0.")
-	@Max(value = 10000000, message = "lớn nhất 10.000.000.")
+	@Min(value = 0 , message = "cost_price nhỏ nhất 0.")
+	@Max(value = 10000000, message = "cost_price lớn nhất 10.000.000.")
 	@JsonProperty("cost_price")
 	private double costPrice;
+	
 
 	public String getName() {
 		return name;
@@ -63,30 +52,7 @@ public class CRUDMaterialRequest extends BaseRequest{
 		this.name = name;
 	}
 
-	public int getUserId() {
-		return userId;
-	}
-
-	public void setUserId(int userId) {
-		this.userId = userId;
-	}
-
-	public String getAvatar() {
-		return avatar;
-	}
-
-	public void setAvatar(String avatar) {
-		this.avatar = avatar;
-	}
-
-	public String getAvatarThumb() {
-		return avatarThumb;
-	}
-
-	public void setAvatarThumb(String avatarThumb) {
-		this.avatarThumb = avatarThumb;
-	}
-
+	
 	public int getCategoryId() {
 		return categoryId;
 	}

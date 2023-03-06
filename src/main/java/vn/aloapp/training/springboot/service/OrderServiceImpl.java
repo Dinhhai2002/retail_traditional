@@ -19,18 +19,19 @@ public class OrderServiceImpl implements OrderService {
 	OrderDao orderDao;
 
 	@Override
-	public Order spUCreateOrder(CRUDOrderRequest request) throws Exception {
-		return orderDao.spUCreateOrder(request);
+	public Order spUCreateOrder(int id, double vat, double discountPercent, double discountAmount, String description,
+			String orderDetails) throws Exception {
+		return orderDao.spUCreateOrder(id, vat, discountPercent, discountAmount, description, orderDetails);
 	}
 
 	@Override
-	public Order findOne(long id) throws Exception {
-		return orderDao.findOne(id);
+	public Order findByOrderByUserId(long id, int userId) throws Exception {
+		return orderDao.findByOrderByUserId(id, userId);
 	}
 
 	@Override
-	public List<Order> findAll() throws Exception {
-		return orderDao.findAll();
+	public List<Order> findOrdersByUserId(int userId) throws Exception {
+		return orderDao.findOrdersByUserId(userId);
 	}
 
 }

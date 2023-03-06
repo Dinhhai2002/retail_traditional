@@ -21,10 +21,12 @@ import vn.aloapp.training.springboot.service.ReportService;
 @RestController
 @RequestMapping("/api/v1/report")
 public class ReportController extends BaseController {
+	
 	@Autowired
 	ReportService reportService;
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+
+	
 	@GetMapping(value = "", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> statistical(
 			@RequestParam(name = "week", required = true, defaultValue = "5") int week,
@@ -35,8 +37,14 @@ public class ReportController extends BaseController {
 		BaseResponse response = new BaseResponse();
 
 		
-		this.accessToken(token);
+		if (type <0 || type >5)
+		{
+			response.setStatus(HttpStatus.BAD_REQUEST);
+			response.setMessageError("kiểu nhập vào bắt buộc lớn hơn 0 và nhỏ hơn 6");
+			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+		}
 		
+
 
 		if(type <0 || type >5)
 		{
@@ -44,15 +52,20 @@ public class ReportController extends BaseController {
 			return new ResponseEntity<BaseResponse>(response, HttpStatus.BAD_REQUEST);
 		}
 
-		List<Report> statistical = reportService.spGAmountStatistical(week, this.formatDate(fromDate),
+	
+
+		User usertoken = this.accessToken(token);
+		
+		List<Report> statistical = reportService.spGAmountStatistical(usertoken.getId(), week, this.formatDate(fromDate),
 				this.formatDate(toDate), type);
 
 		response.setData(statistical);
 
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	
+	
 	@GetMapping(value = "/best-seller", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> bestSeller(
 			@RequestParam(name = "week", required = true, defaultValue = "8") int week,
@@ -69,6 +82,6 @@ public class ReportController extends BaseController {
 
 		response.setData(bestSeller);
 
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 }

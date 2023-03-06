@@ -3,13 +3,12 @@ package vn.aloapp.training.springboot.service;
 import java.util.List;
 
 import vn.aloapp.training.springboot.entity.Category;
-import vn.aloapp.training.springboot.entity.CategoryModel;
+import vn.aloapp.training.springboot.response.CategoryModel;
+import vn.aloapp.training.springboot.response.CategoryResponse;
 
 public interface CategoryService {
 
-	Category spUCreateCategory(Category category) throws Exception;
-
-	Category findOne(Integer id) throws Exception;
+	Category findByUserIdAndCategoryId(int userId, int id) throws Exception;
 
 	void spUChangeStatusCategory(Integer id) throws Exception;
 
@@ -17,8 +16,18 @@ public interface CategoryService {
 
 	public List<Category> spGCategories(int userId, String keyword, int status) throws Exception;
 
-	List<CategoryModel> spGCategoriesV2(int id) throws Exception;
+	List<CategoryModel> spGCategoriesV2(int userId, int id) throws Exception;
 
-	void update(Category category);
+	CategoryModel spGCategoriesByMaterial(int userId, int id) throws Exception;
+
+	void update(Category category) throws Exception;
+
+	Category spUCreateCategory(int userId, String name, int sort, String description) throws Exception;
+
+	List<Category> findByCategoryByUserId(int userId) throws Exception;
+
+	List<Category> spGFilterCategories(int userId, String keyword, int sort, int status) throws Exception;
+
+	Category findByUserIdAndCategoryIdAndStatus(int userId, int categoryId, int status) throws Exception;
 
 }

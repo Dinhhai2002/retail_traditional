@@ -20,30 +20,36 @@ public class WarehouseSessionServiceImpl implements WarehouseSessionService{
 		return warehouseSessionDao.findOne(id);
 	}
 
+
 	@Override
-	public WarehouseSession importWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
-		return warehouseSessionDao.importWarehouseSession(wrapper, warehouseSessionDetails);
+	public WarehouseSession exportWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception {
+		return warehouseSessionDao.exportWarehouseSession(userId, discountPercent, vat, discountAmount, description, warehouseSessionDetails);
 	}
 
 	@Override
-	public WarehouseSession exportWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
-		return warehouseSessionDao.exportWarehouseSession(wrapper, warehouseSessionDetails);
+	public WarehouseSession cancelWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception {
+		return warehouseSessionDao.cancelWarehouseSession(userId, discountPercent, vat, discountAmount, description, warehouseSessionDetails);
 	}
 
 	@Override
-	public WarehouseSession cancelWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
-		return warehouseSessionDao.cancelWarehouseSession(wrapper, warehouseSessionDetails);
-	}
-
-	@Override
-	public WarehouseSession returnWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
-		return warehouseSessionDao.returnWarehouseSession(wrapper, warehouseSessionDetails);
+	public WarehouseSession returnWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception {
+		return warehouseSessionDao.returnWarehouseSession(userId, discountPercent, vat, discountAmount, description, warehouseSessionDetails);
 	}
 
 	@Override
 	public void spUExportWarehouseSessionFromOrder(long id) throws Exception {
 		warehouseSessionDao.spUExportWarehouseSessionFromOrder(id);
 		
+	}
+
+
+	@Override
+	public WarehouseSession importWarehouseSession(int userId, double discountPercent, double vat,
+			double discountAmount, String description, String warehouseSessionDetails) throws Exception {
+		return warehouseSessionDao.importWarehouseSession(userId, discountPercent, vat, discountAmount, description, warehouseSessionDetails);
 	}
 
 	

@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Length;
 
@@ -12,35 +13,28 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CRUDWarehouseSessionRequest {
 	
-	@Min(value = 0, message = "nhỏ nhất là 0")
-	@JsonProperty("user_id")
-	private int userId;
-	
-	@JsonProperty("discount_percent")
-	private double discountPercent;
 	
 	@Min(value = 0 , message = "nhỏ nhất là 0.")
 	@Max(value = 100, message = "lớn nhất 100.")
+	@JsonProperty("discount_percent")
+	private double discountPercent;
+	
+	@Min(value = 0 , message = "vat nhỏ nhất là 0.")
+	@Max(value = 100, message = "vat lớn nhất 100.")
 	private double vat;
 	
-	@Min(value = 0, message = "nhỏ nhất là 0")
+	@Min(value = 0, message = "discount_amount nhỏ nhất là 0")
 	@JsonProperty("discount_amount")
 	private double discountAmount;
 	
 
-	@Length(max = 255, message = "Không được phép lớn hơn 255 kí tự")
+	@NotNull(message = "description không được phép null")
+	@Length(max = 255, message = "description Không được phép lớn hơn 255 kí tự")
 	private String description;	
 	
 	@JsonProperty("warehouse_session_details")
 	private List<CRUDWarehouseSessionDetailRequest> warehouseSessionDetails;
 
-	public int getUserId() {
-		return userId;
-	}
-
-	public void setUserId(int userId) {
-		this.userId = userId;
-	}
 
 	public double getDiscountPercent() {
 		return discountPercent;

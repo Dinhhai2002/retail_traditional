@@ -7,34 +7,31 @@ import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Length;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
-public class CRUDOrderRequest {
+public class CRUDOrderRequest {	
 	
-	@Min(value = 0 , message = "nhỏ nhất 0.")
-	@JsonProperty("user_id")
-	private int userId;
-	
-	@Min(value = 0,message="nhỏ nhất là 0%")
-	@Max(value = 100,message="lớn nhất là 100%")
+	@Min(value = 0,message="vat nhỏ nhất là 0%")
+	@Max(value = 100,message="vat lớn nhất là 100%")
 	private double vat;
 	
 	
-	@Min(value = 0,message="nhỏ nhất là 0%")
-	@Max(value = 100,message="lớn nhất là 100%")
+	@Min(value = 0,message="discount_percent nhỏ nhất là 0%")
+	@Max(value = 100,message="discount_percent lớn nhất là 100%")
 	@JsonProperty("discount_percent")
 	private double discountPercent;
 	
-	@Min(value = 0,message="nhỏ nhất là 0")
-	@Max(value = 10000000,message="lớn nhất là 10.000.000")
+	@Min(value = 0,message="discount_amount nhỏ nhất là 0")
+	@Max(value = 10000000,message="discount_amount lớn nhất là 10.000.000")
 	@JsonProperty("discount_amount")
 	private double discountAmount;
 	
-	
+	@NotNull(message = "description tên không được phép null")
 	@Length(max = 255, message = "không vượt quá 255 kí tự")
 	private String description;
 	
@@ -42,15 +39,6 @@ public class CRUDOrderRequest {
 	@JsonProperty("order_details")
 	private List<OrderDetailRequest> orderDetails;
 
-	
-	
-	public int getUserId() {
-		return userId;
-	}
-
-	public void setUserId(int userId) {
-		this.userId = userId;
-	}
 
 	public double getVat() {
 		return vat;

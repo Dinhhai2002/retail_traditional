@@ -7,8 +7,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CategoryRequest {
 	
-	@Min(value = 0, message = "chỉ có 2 giá trị 0 hoặc 1")
-	@Max(value = 1, message = "chỉ có 2 giá trị 0 hoặc 1")
+	@Min(value = 0, message = "is_accept chỉ có 2 giá trị 0 hoặc 1")
+	@Max(value = 1, message = "is_accept chỉ có 2 giá trị 0 hoặc 1")
 	@JsonProperty("is_accept")
 	private int isAccept;
 

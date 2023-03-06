@@ -27,7 +27,7 @@ public class Unit extends BaseEntity {
 
 	private String description;
 
-	private int status;
+	private boolean status;
 
 	public int getId() {
 		return id;
@@ -61,11 +61,11 @@ public class Unit extends BaseEntity {
 		this.description = description;
 	}
 
-	public int getStatus() {
+	public boolean getStatus() {
 		return status;
 	}
 
-	public void setStatus(int status) {
+	public void setStatus(boolean status) {
 		this.status = status;
 	}
 	

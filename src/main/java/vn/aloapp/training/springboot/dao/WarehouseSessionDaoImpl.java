@@ -25,7 +25,8 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WarehouseSession importWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
+	public WarehouseSession importWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_create_warehouse_session", WarehouseSession.class)
 
@@ -39,11 +40,11 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 
-		query.setParameter("userId", wrapper.getUserId());
-		query.setParameter("discountPercent", wrapper.getDiscountPercent());
-		query.setParameter("_vat", wrapper.getVat());
-		query.setParameter("discountAmount", wrapper.getDiscountAmount());
-		query.setParameter("_description", wrapper.getDescription());
+		query.setParameter("userId", userId);
+		query.setParameter("discountPercent", discountPercent);
+		query.setParameter("_vat", vat);
+		query.setParameter("discountAmount", discountAmount);
+		query.setParameter("_description", description);
 		query.setParameter("warehouseSessionDetail", warehouseSessionDetails);
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
@@ -61,7 +62,8 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WarehouseSession exportWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
+	public WarehouseSession exportWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_export_warehouse_session", WarehouseSession.class)
 
@@ -75,11 +77,11 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 
-		query.setParameter("userId", wrapper.getUserId());
-		query.setParameter("discountPercent", wrapper.getDiscountPercent());
-		query.setParameter("_vat", wrapper.getVat());
-		query.setParameter("discountAmount", wrapper.getDiscountAmount());
-		query.setParameter("_description", wrapper.getDescription());
+		query.setParameter("userId", userId);
+		query.setParameter("discountPercent", discountPercent);
+		query.setParameter("_vat", vat);
+		query.setParameter("discountAmount", discountAmount);
+		query.setParameter("_description", description);
 		query.setParameter("warehouseSessionDetail", warehouseSessionDetails);
 		
 		int statusCode = (int) query.getOutputParameterValue("status_code");
@@ -97,7 +99,8 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WarehouseSession cancelWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
+	public WarehouseSession cancelWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_cancel_warehouse_session", WarehouseSession.class)
 
@@ -111,11 +114,11 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 
-		query.setParameter("userId", wrapper.getUserId());
-		query.setParameter("discountPercent", wrapper.getDiscountPercent());
-		query.setParameter("_vat", wrapper.getVat());
-		query.setParameter("discountAmount", wrapper.getDiscountAmount());
-		query.setParameter("_description", wrapper.getDescription());
+		query.setParameter("userId", userId);
+		query.setParameter("discountPercent", discountPercent);
+		query.setParameter("_vat", vat);
+		query.setParameter("discountAmount", discountAmount);
+		query.setParameter("_description", description);
 		query.setParameter("warehouseSessionDetail", warehouseSessionDetails);
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
@@ -133,7 +136,8 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WarehouseSession returnWarehouseSession(CRUDWarehouseSessionRequest wrapper, String warehouseSessionDetails) throws Exception {
+	public WarehouseSession returnWarehouseSession(int userId, double discountPercent, double vat, double discountAmount,
+			String description, String warehouseSessionDetails) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_return_warehouse_session", WarehouseSession.class)
 
@@ -147,11 +151,11 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 
-		query.setParameter("userId", wrapper.getUserId());
-		query.setParameter("discountPercent", wrapper.getDiscountPercent());
-		query.setParameter("_vat", wrapper.getVat());
-		query.setParameter("discountAmount", wrapper.getDiscountAmount());
-		query.setParameter("_description", wrapper.getDescription());
+		query.setParameter("userId", userId);
+		query.setParameter("discountPercent", discountPercent);
+		query.setParameter("_vat", vat);
+		query.setParameter("discountAmount", discountAmount);
+		query.setParameter("_description", description);
 		query.setParameter("warehouseSessionDetail", warehouseSessionDetails);
 
 		int statusCode = (int) query.getOutputParameterValue("status_code");
@@ -168,7 +172,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 	}
 
 	@Override
-	public void spUExportWarehouseSessionFromOrder(long id) throws Exception {
+	public void spUExportWarehouseSessionFromOrder(long orderId) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_u_export_warehouse_session_from_order", WarehouseSession.class)
 
@@ -177,7 +181,7 @@ public class WarehouseSessionDaoImpl extends AbstractDao<Long, WarehouseSession>
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 
-		query.setParameter("orderId", id);
+		query.setParameter("orderId", orderId);
 		
 		
 		int statusCode = (int) query.getOutputParameterValue("status_code");

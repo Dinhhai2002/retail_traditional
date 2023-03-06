@@ -1,5 +1,7 @@
 package vn.aloapp.training.springboot.entity;
 
+import java.math.BigDecimal;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -48,7 +50,7 @@ public class WarehouseSessionDetail extends BaseEntity{
 	
 	private double price;
 	
-	private float quantity;
+	private BigDecimal quantity;
 	
 	@Column(name = "total_amount")
 	private double totalAmount;
@@ -139,11 +141,11 @@ public class WarehouseSessionDetail extends BaseEntity{
 		this.price = price;
 	}
 
-	public float getQuantity() {
+	public BigDecimal getQuantity() {
 		return quantity;
 	}
 
-	public void setQuantity(float quantity) {
+	public void setQuantity(BigDecimal quantity) {
 		this.quantity = quantity;
 	}
 

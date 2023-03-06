@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,15 +42,18 @@ public class UnitController extends BaseController{
 	@Autowired
 	MaterialService materialService;
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@GetMapping(value = "/list", produces = { MediaType.APPLICATION_JSON_VALUE })
+
+	@GetMapping(value = "", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getList(
-			@RequestParam(name = "status", defaultValue = "1", required = false) int status,
-			@RequestHeader(value = "authorization")  String token)throws Exception {
-		this.accessToken(token);
+			@RequestHeader(value = "authorization") String token,
+			@RequestParam(name = "keyword", defaultValue = "", required = false) String keyword,
+			@RequestParam(name = "status", defaultValue = "-1", required = false) int status) throws Exception {
+	
 		BaseResponse response = new BaseResponse();
-		response.setData(new UnitResponse().mapToList(unitService.spListUnit(status)));
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		User usertoken = this.accessToken(token);
+		
+		response.setData(new UnitResponse().mapToList(unitService.spGFilterUnits(usertoken.getId(), keyword,status)));
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	/**
@@ -62,22 +64,19 @@ public class UnitController extends BaseController{
 	 */
 
 	// create Unit
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/create", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> create(@Valid @RequestBody CRUDUnitRequest unit,
 			@RequestHeader(value = "authorization")  String token) throws Exception {
 		
 		BaseResponse response = new BaseResponse();
 		User usertoken = this.accessToken(token);
+		
 		response.setData(
 				new UnitResponse(unitService.spUCreateUnit(usertoken.getId(), unit.getName(), unit.getDescription())));
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	// update Unit
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/{id}/update", produces = {MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> update(@PathVariable("id") Integer id,
 			@Valid @RequestBody CRUDUnitRequest unitRequest,
@@ -85,50 +84,47 @@ public class UnitController extends BaseController{
 		BaseResponse response = new BaseResponse();
 		
 		User usertoken = this.accessToken(token);
-		Unit unit = unitService.findOne(id);
+		Unit unit = unitService.findByUserIdAndUnitId(usertoken.getId(), id);
 
 		if (unit == null) {
 			response.setStatus(HttpStatus.BAD_REQUEST);
-			response.setMessageError(HttpStatus.BAD_REQUEST.name());
-			return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+			response.setMessageError("Không tìm thấy Đơn vị có mã là: " + id);
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
 		
 		unit.setUserId(usertoken.getId());
 		unit.setName(unitRequest.getName());
 		unit.setDescription(unitRequest.getDescription());
 
-		unitService.spUUpdateUnit(unit);
 
-		response.setData(new UnitResponse(unit));
+		response.setData(new UnitResponse(unitService.spUUpdateUnit(unit)));
 
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	// get Unit detail
- 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+
 	@GetMapping(value = "/{id}/detail", produces = { MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> getById(@PathVariable("id") Integer id,
 			@RequestHeader(value = "authorization") String token) throws Exception {
 		BaseResponse response = new BaseResponse();
 		
-		this.accessToken(token);
-		Unit unit = unitService.findOne(id);
+		User usertoken = this.accessToken(token);
+		Unit unit = unitService.findByUserIdAndUnitId(usertoken.getId(), id);
 
 		if (unit == null) {
 			response.setStatus(HttpStatus.BAD_REQUEST);
-			response.setMessageError(HttpStatus.BAD_REQUEST.name());
-			return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+			response.setMessageError("Không tìm thấy Đơn vị có mã là: "+ id);
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
 
 		response.setData(new UnitResponse(unit));
 
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 	// delete Unit
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@PostMapping(value = "/{id}/change-status", produces = {
 			MediaType.APPLICATION_JSON_VALUE })
 	public ResponseEntity<BaseResponse> changeStatus(@PathVariable("id") int id, 
@@ -136,33 +132,42 @@ public class UnitController extends BaseController{
 			@RequestHeader(value = "authorization") String token)
 			throws Exception {
 		BaseResponse response = new BaseResponse();
-		this.accessToken(token);
-		Unit unit = unitService.findOne(id);
+		
+		
+		User usertoken = this.accessToken(token);
+		Unit unit = unitService.findByUserIdAndUnitId(usertoken.getId(), id);
 
 		if (unit == null) {
 			response.setStatus(HttpStatus.BAD_REQUEST);
-			response.setMessageError(HttpStatus.BAD_REQUEST.name());
+			response.setMessageError("Không tìm thấy Đơn vị có mã là: "+ id);
 			return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
 		}
 
 		List<UnitModel> unitModels = unitService.spGUnitByMaterial(id);
 
-		if (unitRequest.getIsAccept() == 0 && unit.getStatus() == 1) {
-			if (unitModels.stream().filter(x -> x.getLists().size() != 0) != null) {
+		if (unitRequest.getIsAccept() == 0 && unit.getStatus() == true) {
+			if (unitModels.stream().anyMatch(x -> !x.getLists().isEmpty())) {
+				
 				response.setStatus(HttpStatus.MULTIPLE_CHOICES);
-				response.setMessageError(" Có nguyên liệu đang sử dụng đơn này , bạn có muốn tắt đơn vị này không ");
+				response.setMessageError(""
+						+ "Có nguyên liệu đang sử dụng đơn này , bạn có muốn tắt đơn vị này không ");
 			}
-		} else {
+			response.setStatus(HttpStatus.MULTIPLE_CHOICES);
+			response.setMessageError(
+					"Bạn có chắc muốn đổi trạng thái? nếu có thay đổi giá trị is_accept là 1.");
 
-			if (unit.getStatus() == 1) {
-				unit.setStatus(0);
-				materialService.spUDeleteUnitIdByMaterial(id);
-			} else {
-				unit.setStatus(1);
-			}
+			
+		} else {
+			
+			unit.setStatus(!unit.getStatus());
 			unitService.update(unit);
+
+			if (!unit.getStatus()) {
+				materialService.spUDeleteUnitIdByMaterial(id);
+			}
+			
 		}
-		return new ResponseEntity<BaseResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 }

@@ -1,3 +1,49 @@
+--------------------------
+
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_filter_units`(
+	IN  `userId` INT(11),
+	IN  `_keyword` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN  `_status` TINYINT(1),
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255)
+)
+BEGIN
+	
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`= 0;
+	SET `message_error`= 'Success';
+
+	SELECT 	u.*
+	FROM 	units AS u
+	WHERE 	u.user_id = `userId`
+		AND
+		   ( 
+			(`_keyword` <> '' 	AND u.name LIKE CONCAT('%', `_keyword` , '%')
+					OR u.description  LIKE CONCAT('%',`_keyword`,'%')) 
+			OR `_keyword` = '' 				
+		    ) 
+		AND ( 
+			(`_status` > -1 AND u.status = `_status`)
+			OR 	`_status` < 0	
+		
+		    );
+	
+END
+
+
+-------------------------
+
+
+
+
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_list_unit`(
 	IN  `_status` TINYINT(1),
 	
@@ -10,23 +56,34 @@ BEGIN
 		SET `status_code` = 1;
 		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
 	END;
-	SET `status_code`=0;
-	SET `message_error`='Success';
+
+	SET `status_code`= 0;
+	SET `message_error`= 'Success';
 
 	SELECT 	u.*
 	FROM 	units  AS u
-	WHERE u.status  = `_status`;
+	WHERE 	u.status  = `_status`;
 			
 END
 
 
 
 
------------------
+
+---------------------------
+
+
+
+
+
+
+
 
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_g_unit_by_material`(
-     IN `unitId` INT(11),
+
+     	 IN `unitId` INT(11),
+     	 
 	 OUT `status_code` TINYINT(1),
 	 OUT `message_error` VARCHAR(255)
 )
@@ -41,21 +98,28 @@ SP:BEGIN
 	 SET `message_error` = 'Success';
 	
 
-	SELECT 	u.* ,CONCAT('[',GROUP_CONCAT(JSON_OBJECT(
-												'id', m.id,
-												'name', m.name													
-								)
-					),']') AS listMaterials
+	SELECT 	u.* ,
+		CONCAT('[',GROUP_CONCAT(JSON_OBJECT(
+			'id', m.id,
+			'name', m.name)
+		),']') AS listMaterials
 	FROM 	units u LEFT JOIN materials m ON u.id = m.unit_id 
 	WHERE 	m.unit_id = u.id 
-	GROUP BY u.id ;
+	GROUP BY 	u.id ;
 	
 
 END
 
 
--------------------------
 
+
+
+
+
+
+
+
+-----------------
 
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_change_status_unit`(
@@ -68,7 +132,6 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_change_st
 SP:BEGIN
 	
 	DECLARE `isExitUnit` TINYINT DEFAULT 0;
-
 	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
 		SET `status_code` = 1;
 		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
@@ -77,29 +140,36 @@ SP:BEGIN
 	SET `status_code`= 0;
 	SET `message_error`= 'Success';
 
-	SELECT 1
-	INTO `isExitUnit`
-	FROM units u 
-	WHERE u.id= `_id`;
+	SELECT 	1
+	INTO 	`isExitUnit`
+	FROM 	units u 
+	WHERE 	u.id= `_id`;
 
 
 	IF `isExitUnit` != 1 THEN
-	SET `status_code` = 2;
-	SET `message_error` = CONCAT('Đơn vị có mã: ',`_id`,' không tìm thấy!');
-	LEAVE SP; 
+		SET `status_code` = 2;
+		SET `message_error` = CONCAT('Đơn vị có mã: ',`_id`,' không tìm thấy!');
+		LEAVE SP; 
 	END IF;
 
 
-	UPDATE units u 
-	SET u.status  = `_status`
-	WHERE u.id = `_id`; 
+	UPDATE 	units 
+	SET 	status  = `_status`
+	WHERE 	id = `_id`; 
 
 END
 
 
 
-------------------
 
+
+
+
+
+
+
+
+-----------------
 
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_create_unit`(
@@ -121,110 +191,43 @@ SP:BEGIN
 		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
 	END;
 
-	SET `status_code`=0;
-	SET `message_error`='Success';
+	SET `status_code`= 0;
+	SET `message_error`= 'Success';
 
-	SELECT 1
-	INTO `isExitUnit`
-	FROM units u 
-	WHERE HEX(u.name)  = HEX(`_name`);
+	SELECT 	1
+	INTO 	`isExitUnit`
+	FROM 	units u 
+	WHERE 	HEX(u.name)  = HEX(`_name`)  AND u.user_id = `userId`;
 
 
 	IF `isExitUnit` > 0 THEN
-	SET `status_code` = 2;
-	SET `message_error` = CONCAT('Tên đơn vị : ',`_name`,' đã tồn tại!');
-	LEAVE SP; 
+		SET `status_code` = 2;
+		SET `message_error` = CONCAT('Tên đơn vị : ',`_name`,' đã tồn tại!');
+		LEAVE SP; 
 	END IF;
 
 
-	INSERT INTO units
-					(
-					name , 
-					user_id ,
-					description
-					) 
-	SELECT		 `_name`,
-				 `userId`,
-				 `_description`;
+	INSERT INTO units (
+		        name , 
+		        user_id ,
+		        description
+		       ) 
+	        SELECT     `_name`,
+		       `userId`,
+		       `_description`;
 
-	SELECT * 
-	FROM units AS u
-	WHERE u.id = LAST_INSERT_ID(); 
+	SELECT 	u.* 
+	FROM 	units AS u
+	WHERE 	u.id = LAST_INSERT_ID(); 
 
 END
-
 
 
 
 ------------------------
 
 
-
-
-
-CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_update_unit`(	
-	IN `_id` INT(11),
-	IN `userId` INT(11),
-	IN `_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
-	IN `_description` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci,
-	
-	OUT `status_code` TINYINT(1),
-	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
-)
-SP:BEGIN
-	
-
-	DECLARE `isExitUnit` TINYINT DEFAULT 0;
-	
-
-	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
-		SET `status_code` = 1;
-		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
-	END;
-
-	SET `status_code`=0;
-	SET `message_error`='Success';
-
-
-	SELECT 	COUNT(*)
-	INTO 	`isExitUnit`
-	FROM 	units u
-	WHERE 	u.name= `_name`;
-
-
-	IF `isExitUnit` > 0 THEN
-		SET `status_code` = 2;
-		SET `message_error` = CONCAT('Tên đơn vị: ',`_name`,' đã tồn tại!');
-		LEAVE SP; 
-	END IF;
-
-
-
-	UPDATE units u 
-	SET 	u.name = `_name`,
-			u.user_id  = `userId`,
-			u.description = `_description`
-	WHERE u.id = `_id`; 
-
-
-
-	SELECT 	* 
-	FROM 	units AS u
-	WHERE 	u.id = `_id`; 
-
-END
-
-
-
-
-
-
-------------------------------
-
-
-
-
-CREATE PROCEDURE retail_traditional.sp_u_delete_unit_id_by_material(
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_delete_unit_id_by_material`(
 	IN `unitId` INT(11),
 	
 	OUT `status_code` TINYINT(1),
@@ -242,10 +245,81 @@ SP:BEGIN
 	SET `status_code`=0;
 	SET `message_error`='Success';
 
-	UPDATE materials m
-	SET m.unit_id = 0
-	WHERE m.unit_id  = `unitId`;
+	UPDATE 	materials m
+	SET 	m.unit_id = 0
+	WHERE 	m.unit_id  = `unitId`;
 
 END
+
+
+
+
+
+
+
+
+--------------------
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retail_traditional`.`sp_u_update_unit`(	
+	
+	IN `userId` INT(11),
+	IN `_id` INT(11),
+	IN `_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci,
+	IN `_description` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci,
+	
+	OUT `status_code` TINYINT(1),
+	OUT `message_error` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci
+)
+SP:BEGIN
+	
+	DECLARE `isExitUnit` TINYINT DEFAULT 0;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN
+		SET `status_code` = 1;
+		GET DIAGNOSTICS CONDITION 1 `message_error` = MESSAGE_TEXT;
+	END;
+
+	SET `status_code`=0;
+	SET `message_error`='Success';
+
+	SELECT 	1
+	INTO   	`isExitUnit`
+	FROM   	units u
+	WHERE  	u.user_id = `userId`
+		AND u.id <> `_id`
+		AND HEX(u.name) = HEX(`_name`);
+		
+	IF `isExitUnit` > 0 THEN 
+		SET status_code = 2;
+		SET `message_error` = CONCAT('Tên đơn vị: ',`_name`,' đã tồn tại!');
+		LEAVE SP;
+	END IF;
+
+
+
+	UPDATE 	units u 
+	SET 	u.name = `_name`,
+		u.user_id  = `userId`,
+		u.description = `_description`
+	WHERE 	u.id = `_id`; 
+
+
+
+	SELECT 	u.* 
+	FROM 	units AS u
+	WHERE 	u.id = `_id`; 
+
+END
+
+
+
+
+
+
+
+
+
+
+--------------------------
 
 

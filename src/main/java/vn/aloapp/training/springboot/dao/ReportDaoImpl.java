@@ -15,12 +15,14 @@ import vn.aloapp.training.springboot.entity.Report;
 
 @Repository("reportDao")
 public class ReportDaoImpl extends AbstractDao<Long, Report> implements ReportDao {
-	@SuppressWarnings("unchecked")
+	
+	
 	@Override
-	public List<Report> spGAmountStatistical(int week, String fromDate, String toDate,int type) throws Exception {
+	public List<Report> spGAmountStatistical(int userId, int week, String fromDate, String toDate,int type) throws Exception {
 		StoredProcedureQuery query = this.getSession()
 				.createStoredProcedureQuery("sp_g_amount_statistical", Report.class)
 
+				.registerStoredProcedureParameter("userId", Integer.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("_input", Integer.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("fromDateString", String.class, ParameterMode.IN)
 				.registerStoredProcedureParameter("toDateString", String.class, ParameterMode.IN)
@@ -30,6 +32,7 @@ public class ReportDaoImpl extends AbstractDao<Long, Report> implements ReportDa
 				.registerStoredProcedureParameter("status_code", Integer.class, ParameterMode.OUT)
 				.registerStoredProcedureParameter("message_error", String.class, ParameterMode.OUT);
 
+		query.setParameter("userId", userId);
 		query.setParameter("_input", week);
 		query.setParameter("fromDateString", fromDate);
 		query.setParameter("toDateString", toDate);
@@ -41,13 +44,15 @@ public class ReportDaoImpl extends AbstractDao<Long, Report> implements ReportDa
 
 		switch (StoreProcedureStatusCodeEnum.valueOf(statusCode)) {
 		case SUCCESS:
-			return	 query.getResultList();
+			return query.getResultList();
 		case INPUT_INVALID:
 			throw new TechresHttpException(HttpStatus.BAD_REQUEST, messageError);
 		default:
 			throw new Exception(messageError);
 		}
 	}
+	
+	
 
 	@SuppressWarnings("unchecked")
 	@Override

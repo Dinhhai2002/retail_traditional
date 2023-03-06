@@ -56,7 +56,7 @@ public class Material extends BaseEntity{
 	@Column(name = "cost_price")
 	private double costPrice;
 
-	private int status;
+	private boolean status;
 
 	public int getId() {
 		return id;
@@ -170,11 +170,11 @@ public class Material extends BaseEntity{
 		this.costPrice = costPrice;
 	}
 
-	public int getStatus() {
+	public boolean getStatus() {
 		return status;
 	}
 
-	public void setStatus(int status) {
+	public void setStatus(boolean status) {
 		this.status = status;
 	}
 	
