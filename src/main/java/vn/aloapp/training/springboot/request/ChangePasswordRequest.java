@@ -1,7 +1,6 @@
 package vn.aloapp.training.springboot.request;
 
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.Length;
 
